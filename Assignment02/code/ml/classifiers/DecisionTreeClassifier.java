@@ -4,7 +4,6 @@ import ml.DataSet;
 import ml.Example;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,14 +27,14 @@ public class DecisionTreeClassifier implements Classifier{
     /**
      * Train this classifier based on the data set
      *
-     * @param data
+     * @param data training data
      */
     @Override
     public void train(DataSet data){
 
     }
 
-    public DecisionTreeNode trainHelper(DataSet data, int currentDepth, double parentMajorityLabel){
+    public DecisionTreeNode trainHelper(DataSet data, int currentDepth, double parentMajorityLabel) {
 
         // parentMajorityLabel helpful for case #4!!
 
@@ -45,7 +44,7 @@ public class DecisionTreeClassifier implements Classifier{
     /**
      * Classify the example.  Should only be called *after* train has been called.
      *
-     * @param example
+     * @param example an example from a test data set
      * @return the class label predicted by the classifier for this example
      */
     @Override
@@ -68,7 +67,7 @@ public class DecisionTreeClassifier implements Classifier{
      * Determines if all labels in a data set are equivalent.
      * Expects at least 1 item in the data set.
      *
-     * @param dataSet
+     * @param dataSet a non-empty data set
      * @return True if all labels in the dataset are equivalent, false otherwise.
      */
     public boolean labelsAreEqual(DataSet dataSet){
@@ -79,9 +78,23 @@ public class DecisionTreeClassifier implements Classifier{
     }
 
     /**
+     * Determines if all examples contain equivalent features in a data set.
+     * Expects at least 1 item in the data set.
+     *
+     * @param dataSet a non-empty data set
+     * @return True if all example features in the dataset are equivalent, false otherwise.
+     */
+    public boolean featuresAreEqual(DataSet dataSet){
+        ArrayList<Example> data = dataSet.getData();
+        Example firstExample = data.get(0);
+
+        return data.stream().allMatch(d -> d.equalFeatures(firstExample));
+    }
+
+    /**
      * Retrieves the majority label of the supplied
      *
-     * @param dataSet
+     * @param dataSet a non-empty data set
      * @return The majority label of the supplied data set.
      */
     public double findMajorityLabel(DataSet dataSet){
@@ -97,20 +110,6 @@ public class DecisionTreeClassifier implements Classifier{
                 .max(Map.Entry.comparingByValue())
                 .orElseThrow()
                 .getKey();
-    }
-
-    /**
-     * Determines if all examples contain equivalent features in a data set.
-     * Expects at least 1 item in the data set.
-     *
-     * @param dataSet
-     * @return True if all example features in the dataset are equivalent, false otherwise.
-     */
-    public boolean featuresAreEqual(DataSet dataSet){
-        ArrayList<Example> data = dataSet.getData();
-        Example firstExample = data.get(0);
-
-        return data.stream().allMatch(d -> d.equalFeatures(firstExample));
     }
 
     /**
