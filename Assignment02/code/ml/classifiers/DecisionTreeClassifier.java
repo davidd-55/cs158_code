@@ -3,9 +3,11 @@ package ml.classifiers;
 import ml.DataSet;
 import ml.Example;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DecisionTreeClassifier implements Classifier{
     private int depthLimit;
@@ -33,9 +35,11 @@ public class DecisionTreeClassifier implements Classifier{
 
     }
 
-    public void trainHelper(DataSet data, int currentDepth, double parentMajorityLabel){
+    public DecisionTreeNode trainHelper(DataSet data, int currentDepth, double parentMajorityLabel){
 
         // parentMajorityLabel helpful for case #4!!
+
+        return null;
     }
 
     /**
@@ -74,13 +78,25 @@ public class DecisionTreeClassifier implements Classifier{
         return data.stream().allMatch(d -> d.getLabel() == firstLabel);
     }
 
+    /**
+     * Retrieves the majority label of the supplied
+     *
+     * @param dataSet
+     * @return The majority label of the supplied data set.
+     */
     public double findMajorityLabel(DataSet dataSet){
         ArrayList<Example> data = dataSet.getData();
-        // figure this shit out
-        ArrayList<double> allFeatures = data.stream()
-                .map(d -> d.getLabel())
-                .;
-        return 0.0;
+
+        // this is a general solution that will work for data with labels that
+        // aren't just binary!
+        return data.stream()
+                .map(Example::getLabel)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow()
+                .getKey();
     }
 
     /**
