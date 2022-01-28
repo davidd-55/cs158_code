@@ -7,15 +7,22 @@ import ml.classifiers.RandomClassifier;
 public class Experimenter {
     public static void main(String[] args) {
         // parse and split data with helper
-        DataSet[] dataSplit = getSplitTitanicData(0.8);
+        // DataSet[] dataSplit = getSplitTitanicData(0.8);
+        DataSet[] dataSplit = getSplitDemoData(1);
         DataSet trainData = dataSplit[0];
         DataSet testData = dataSplit[1];
 
         // initialize random classifier
-        RandomClassifier randClassifier = new RandomClassifier();
+        // RandomClassifier randClassifier = new RandomClassifier();
+
+        // initialize DT classifier
+        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
+
+        // TODO: remove after testing :)
+        dtClassifier.train(trainData);
 
         // train and test classifier
-        trainTestClassifier(randClassifier, trainData, testData);
+        // trainTestClassifier(dtClassifier, trainData, testData);
     }
 
     public static void trainTestClassifier(Classifier classifier, DataSet trainData, DataSet testData) {
@@ -61,6 +68,11 @@ public class Experimenter {
     public static DataSet[] getSplitDefaultData(double splitFraction){
         DataSet defaultData = new DataSet("/Users/daviddattile/Dev/cs158_code/Assignment02/data/default.csv");
         return defaultData.split(splitFraction);
+    }
+
+    public static DataSet[] getSplitDemoData(double splitFraction){
+        DataSet demoData = new DataSet("/Users/daviddattile/Dev/cs158_code/Assignment02/data/demo.csv");
+        return demoData.split(splitFraction);
     }
 
     public static void printStats(int correctGuesses, int totalGuesses) {
