@@ -4,6 +4,11 @@ import ml.classifiers.Classifier;
 import ml.classifiers.DecisionTreeClassifier;
 import ml.classifiers.RandomClassifier;
 
+/**
+ * A class to run experiments for our classifier
+ *
+ * Prepared for CS158 Assignment 02. Authored by David D'Attile
+ */
 public class Experimenter {
     public static void main(String[] args) {
         // parse and split data with helper
@@ -18,8 +23,12 @@ public class Experimenter {
         // initialize DT classifier
         DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
 
+        // set max DT depth
+        dtClassifier.setDepthLimit(-1);
+
         // TODO: remove after testing :)
         dtClassifier.train(trainData);
+        //System.out.println(dtClassifier);
 
         // train and test classifier
         // trainTestClassifier(dtClassifier, trainData, testData);
