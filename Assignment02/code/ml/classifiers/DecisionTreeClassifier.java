@@ -35,17 +35,14 @@ public class DecisionTreeClassifier implements Classifier{
      */
     @Override
     public void train(DataSet dataSet){
+        // separate data
         ArrayList<Example> data = dataSet.getData();
 
-        System.out.printf("Data labels are equal: %b\n", labelsAreEqual(data));
-        System.out.printf("Data features are equal: %b\n", featuresAreEqual(data));
-        System.out.printf("Majority label: %f\n", findMajorityLabel(0.0, data));
-        System.out.printf("Data has majority label: %b\n", majorityLabelExists(data));
-
+        // assign feature map
         this.featureMap = dataSet.getFeatureMap();
 
         // parent majority label initialized as 0.0 at start of decision tree
-        this.root = trainHelper(data, new HashSet<Integer>(), 0, findMajorityLabel(0.0, data));
+        this.root = trainHelper(data, new HashSet<>(), 0, findMajorityLabel(0.0, data));
     }
 
     private DecisionTreeNode trainHelper(
@@ -85,14 +82,17 @@ public class DecisionTreeClassifier implements Classifier{
         // increment current decision tree depth
         int newDepth = currentDepth + 1;
 
+        // TODO breaking ties???
         // calculate "score" for each feature
         // branch off best one; create new inner node
         int featureIndex = calculateBestFeatureIndex(usedFeatures, partitionedData);
         DecisionTreeNode innerNode = new DecisionTreeNode(featureIndex);
 
         // make copies of used features so that we're not updating same object!
-        Set<Integer> refreshedUsedFeatures = new HashSet<>(usedFeatures);
-        refreshedUsedFeatures.add(featureIndex);
+        Set<Integer> refreshedUsedFeaturesLeft = new HashSet<>(usedFeatures);
+        refreshedUsedFeaturesLeft.add(featureIndex);
+        Set<Integer> refreshedUsedFeaturesRight = new HashSet<>(usedFeatures);
+        refreshedUsedFeaturesRight.add(featureIndex);
 
         // create data_left and data_right
         ArrayList<ArrayList<Example>> splitData = splitDataByFeatureIndex(featureIndex, partitionedData);
@@ -100,8 +100,8 @@ public class DecisionTreeClassifier implements Classifier{
         ArrayList<Example> dataRight = splitData.get(1);
 
         // recurse! call trainHelper for L/R children
-        innerNode.setLeft(trainHelper(dataLeft, refreshedUsedFeatures, newDepth, currentMajorityLabel));
-        innerNode.setRight(trainHelper(dataRight, refreshedUsedFeatures, newDepth, currentMajorityLabel));
+        innerNode.setLeft(trainHelper(dataLeft, refreshedUsedFeaturesLeft, newDepth, currentMajorityLabel));
+        innerNode.setRight(trainHelper(dataRight, refreshedUsedFeaturesRight, newDepth, currentMajorityLabel));
 
         return innerNode;
     }
@@ -114,7 +114,34 @@ public class DecisionTreeClassifier implements Classifier{
      */
     @Override
     public double classify(Example example){
-        return 0.0;
+        return classifyHelper(example, this.root);
+    }
+
+    /**
+     * Recursive helper function for classifying an example on a learned tree.
+     *
+     * @param example
+     * @param dtNode
+     * @return A double value representing the predicted label.
+     */
+    private double classifyHelper(Example example, DecisionTreeNode dtNode) {
+        // check base case (i.e. if current node is a leaf)
+        if (dtNode.isLeaf()) {
+            return dtNode.prediction();
+        }
+
+        // get feature index internal node splits on
+        int splitFeatureIndex = dtNode.getFeatureIndex();
+
+        // get respective value at given feature index for the example
+        double exampleFeatureIndexValue = example.getFeature(splitFeatureIndex);
+
+        // recurse left or right
+        if (exampleFeatureIndexValue == DecisionTreeNode.LEFT_BRANCH) {
+            return classifyHelper(example, dtNode.getLeft());
+        } else {
+            return classifyHelper(example, dtNode.getRight());
+        }
     }
 
     /**
@@ -233,6 +260,7 @@ public class DecisionTreeClassifier implements Classifier{
                 // reassign feature index representing min training error if appropriate
                 if (currTrainingError < minTrainingError) {
                     minTrainingErrorFeatureIndex = featureIndex;
+                    minTrainingError = currTrainingError;
                 }
             }
         }
@@ -240,7 +268,6 @@ public class DecisionTreeClassifier implements Classifier{
         return minTrainingErrorFeatureIndex;
     }
 
-    // TODO: implement
     /**
      * Determines the training error using supplied data for a given feature index.
      *
@@ -250,7 +277,50 @@ public class DecisionTreeClassifier implements Classifier{
      * given feature index.
      */
     private double calculateTrainingErrorForFeatureIndex(int featureIndex, ArrayList<Example> data) {
-        return 0.0;
+        // initialize variables
+        int totalExamples = data.size();
+        ArrayList<Example> binLeft = new ArrayList<>();
+        ArrayList<Example> binRight = new ArrayList<>();
+
+        // loop through and bin examples
+        for (Example e : data) {
+            if (e.getFeature(featureIndex) == DecisionTreeNode.LEFT_BRANCH) {
+                binLeft.add(e);
+            } else {
+                binRight.add(e);
+            }
+        }
+
+        // calculate training error
+        int binLeftMajorityCount = countMajorityLabel(binLeft);
+        int binRightMajorityCount = countMajorityLabel(binRight);
+        double accuracy = (double)(binLeftMajorityCount + binRightMajorityCount) / (double)totalExamples;
+
+        // 1 - accuracy for training error
+        return 1 - accuracy;
+    }
+
+    /**
+     * Counts the number of examples in provided data that are members of the majority label.
+     *
+     * @param data
+     * @return Integer representing count of majority label.
+     */
+    private int countMajorityLabel(ArrayList<Example> data) {
+        // initialize counters
+        int negLabel = 0;
+        int posLabel = 0;
+
+        // increment through data and count neg & pos features
+        for (Example e : data) {
+            if (e.getLabel() < 0) {
+                negLabel++;
+            } else {
+                posLabel++;
+            }
+        }
+
+        return Math.max(negLabel, posLabel);
     }
 
     /**
