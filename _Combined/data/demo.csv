@@ -1,0 +1,8 @@
+# a demo csv for testing dt classifier helper methods
+feat1,feat2,feat3,label
+0,1,1,1
+0,1,1,1
+0,1,1,1
+0,1,1,1
+0,1,1,1
+0,1,1,1
