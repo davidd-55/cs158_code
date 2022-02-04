@@ -49,6 +49,22 @@ public class PerceptronClassifier implements Classifier {
             // loop through shuffled data for training
             for (Example e : clonedData) {
 
+                // isolate prediction and feature label
+                double cLabel = classify(e);
+                double fLabel = e.getLabel();
+
+                // update if prediction based on current model is wrong
+                if (cLabel * fLabel <= 0) {
+
+                    // update all weights with wi = wi + (fi * fLabel)
+                    for (int j = 0; j < this.weights.size(); j++) {
+                        double updatedWeight = this.weights.get(j) + (e.getFeature(j) * fLabel);
+                        this.weights.set(j, updatedWeight);
+                    }
+
+                    // update bias with actual label
+                    this.bias += fLabel;
+                }
             }
         }
     }
@@ -57,16 +73,34 @@ public class PerceptronClassifier implements Classifier {
      * Classify the example.  Should only be called *after* train has been called.
      *
      * @param example an example from a test data set
-     * @return the class label predicted by the classifier for this example
+     * @return the class label predicted by the classifier for this example (1 or -1)
      */
     @Override
     public double classify(Example example) {
-        // TODO: check for weights count == feature count
 
-        // 0 = w1f1 + w2f2 + ... + wnfn + b
+        // check for weights count == feature count
+        if (this.weights.size() != example.getFeatureSet().size()) {
+            String msg = String.format(
+                    "expected example feature count to match model. example feature count: %d model feature count: %d",
+                    example.getFeatureSet().size(),
+                    this.weights.size());
 
-        //double sum
-        return 0.0;
+            throw new IllegalArgumentException(msg);
+        }
+
+        // init classification
+        double classification = 0.0;
+
+        // w1f1 + w2f2 + ... + wnfn
+        for (int i = 0; i < this.weights.size(); i++) {
+            classification += this.weights.get(i) * example.getFeature(i);
+        }
+
+        // add bias
+        classification += this.bias;
+
+        // return 1 or -1
+        return classification / Math.abs(classification);
     }
 
     /**
@@ -94,8 +128,8 @@ public class PerceptronClassifier implements Classifier {
     public void setIterations(int iterations) {
         // throw error for supplied iterations < 0
         if (iterations < 0) {
-            String message = String.format("expected a positive 'iterations' value, received: %d", iterations);
-            throw new IllegalArgumentException(message);
+            String msg = String.format("expected a positive 'iterations' value, received: %d", iterations);
+            throw new IllegalArgumentException(msg);
         }
 
         this.maxIterations = iterations;
