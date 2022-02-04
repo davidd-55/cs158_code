@@ -24,6 +24,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/_Combined/data/simple1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/_Combined/data/simple2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

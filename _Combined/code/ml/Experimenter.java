@@ -2,6 +2,8 @@ package ml;
 
 import ml.classifiers.Classifier;
 import ml.classifiers.DecisionTreeClassifier;
+import ml.classifiers.PerceptronClassifier;
+import ml.classifiers.AveragePerceptronClassifier;
 import ml.classifiers.RandomClassifier;
 
 /**
@@ -17,6 +19,23 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
+        // TODO: when done, port to A03 folder and run!
+        // parse data with helper
+        DataSet data = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/simple1.csv");
+
+        PerceptronClassifier pClassifier = new PerceptronClassifier();
+        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
+
+        pClassifier.setIterations(5);
+        apClassifier.setIterations(3);
+
+        pClassifier.train(data);
+        apClassifier.train(data);
+
+        System.out.println(pClassifier);
+        System.out.println(apClassifier);
+
+        /*
         // parse data with helper
         DataSet data = getData("/Users/daviddattile/Dev/cs158_code/Assignment02/data/titanic-train.csv");
 
@@ -52,7 +71,8 @@ public class Experimenter {
             String expDescription = String.format("5-%d. Final stats from DT classifier (no depth limit & %f train split over 100 iters.):", expNumber, splitFraction);
             trainTestClassifierWithTestAccuracy(expDescription, dtClassifier, data, splitFraction);
             expNumber++;
-        }
+
+         */
     }
 
     /**
