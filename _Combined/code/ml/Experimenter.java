@@ -1,10 +1,7 @@
 package ml;
 
 import ml.classifiers.Classifier;
-import ml.classifiers.DecisionTreeClassifier;
 import ml.classifiers.PerceptronClassifier;
-import ml.classifiers.AveragePerceptronClassifier;
-import ml.classifiers.RandomClassifier;
 
 /**
  * A class to run experiments for our classifier
@@ -21,19 +18,15 @@ public class Experimenter {
     public static void main(String[] args) {
         // TODO: when done, port to A03 folder and run!
         // parse data with helper
-        DataSet data = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/simple1.csv");
+        DataSet data = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv");
 
+
+        // 1. train and test perceptron classifier with max iteration of 10; split fraction = 0.8
         PerceptronClassifier pClassifier = new PerceptronClassifier();
-        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
-
-        pClassifier.setIterations(5);
-        apClassifier.setIterations(3);
-
-        pClassifier.train(data);
-        apClassifier.train(data);
-
+        pClassifier.setIterations(100);
+        trainTestClassifier("1. Final stats from perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, data, 0.8);
         System.out.println(pClassifier);
-        System.out.println(apClassifier);
+
 
         /*
         // parse data with helper

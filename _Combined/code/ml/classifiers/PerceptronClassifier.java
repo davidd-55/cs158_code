@@ -10,17 +10,17 @@ import java.util.*;
  * Prepared for CS158 Assignment 03. Authored by David D'Attile
  */
 public class PerceptronClassifier implements Classifier {
-    private Integer maxIterations;
-    private Double bias;
-    private ArrayList<Double> weights;
+    protected Integer maxIterations;
+    protected Double bias;
+    protected ArrayList<Double> weights;
 
     /**
-     * Initialize the decision tree classifier. At initialization, the
-     * decision tree is a decision stump defaulting to a prediction of '0.0',
-     * has no depth limit, and has no default dataSet.
+     * Initialize the perceptron classifier. At initialization, the perceptron
+     * defaults to a prediction of '0.0', has a max iterations value of 10,
+     * and has no default dataSet.
      */
     public PerceptronClassifier() {
-        this.maxIterations = 0;
+        this.maxIterations = 10;
         this.bias = 0.0;
         this.weights = new ArrayList<>();
     }
@@ -77,13 +77,15 @@ public class PerceptronClassifier implements Classifier {
      */
     @Override
     public double classify(Example example) {
+        // get number of weights
+        int weightCount = this.weights.size();
 
         // check for weights count == feature count
-        if (this.weights.size() != example.getFeatureSet().size()) {
+        if (weightCount != example.getFeatureSet().size()) {
             String msg = String.format(
                     "expected example feature count to match model. example feature count: %d model feature count: %d",
                     example.getFeatureSet().size(),
-                    this.weights.size());
+                    weightCount);
 
             throw new IllegalArgumentException(msg);
         }
@@ -92,15 +94,20 @@ public class PerceptronClassifier implements Classifier {
         double classification = 0.0;
 
         // w1f1 + w2f2 + ... + wnfn
-        for (int i = 0; i < this.weights.size(); i++) {
+        for (int i = 0; i < weightCount; i++) {
             classification += this.weights.get(i) * example.getFeature(i);
         }
 
         // add bias
         classification += this.bias;
 
-        // return 1 or -1
-        return classification / Math.abs(classification);
+        // TODO: check that < is okay
+        // return 1 or -1 based on classification sign
+        if (classification < 0) {
+            return -1.0;
+        } else {
+            return 1.0;
+        }
     }
 
     /**
@@ -114,6 +121,7 @@ public class PerceptronClassifier implements Classifier {
 
         // reset weights to zero
         this.weights.clear();
+
         for (int i = 0; i < weightCount; i++) {
             this.weights.add(0.0);
         }
