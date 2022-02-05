@@ -49,20 +49,15 @@ public class ClassifierTimer {
 	}
 	
 	public static void main(String[] args){
-		String csvFile = "/Users/dkauchak/classes/cs451/assignments/assignment3/starter/data/titanic-train.perc.csv";
+		String csvFile = "/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv";
 		DataSet dataset = new DataSet(csvFile);
 
 		int numRuns = 10;
-		
-		/*
-		Copy your decision tree code from last time to check the timing.  If you didn't get your code working,
-		come talk to me.
 
 		System.out.println("------------------------");
 		System.out.println("Decision Tree:");
 		DecisionTreeClassifier dt = new DecisionTreeClassifier();
 		timeClassifier(dt, dataset, numRuns);
-		*/
 
 		System.out.println("------------------------");
 		System.out.println("Perceptron:");

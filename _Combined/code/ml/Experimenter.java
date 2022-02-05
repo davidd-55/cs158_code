@@ -2,6 +2,7 @@ package ml;
 
 import ml.classifiers.Classifier;
 import ml.classifiers.PerceptronClassifier;
+import ml.classifiers.AveragePerceptronClassifier;
 
 /**
  * A class to run experiments for our classifier
@@ -20,52 +21,32 @@ public class Experimenter {
         // parse data with helper
         DataSet data = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv");
 
-
-        // 1. train and test perceptron classifier with max iteration of 10; split fraction = 0.8
+        // init classifiers
         PerceptronClassifier pClassifier = new PerceptronClassifier();
-        pClassifier.setIterations(100);
-        trainTestClassifier("1. Final stats from perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, data, 0.8);
-        System.out.println(pClassifier);
+        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
 
 
-        /*
-        // parse data with helper
-        DataSet data = getData("/Users/daviddattile/Dev/cs158_code/Assignment02/data/titanic-train.csv");
+        // 1a. train and test perceptron classifier with max iteration of 10; split fraction = 0.8
+        pClassifier.setIterations(10);
+        trainTestClassifier("1a. Final stats from perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, data, 0.8);
 
-        // 1. train and test random classifier
-        RandomClassifier randClassifier = new RandomClassifier();
-        trainTestClassifier("1. Final stats from random classifier (80/20 split over 100 iters.):", randClassifier, data, 0.8);
+        // 1b. train and test avg perceptron classifier with max iteration of 10; split fraction = 0.8
+        apClassifier.setIterations(10);
+        trainTestClassifier("1b. Final stats from average perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", apClassifier, data, 0.8);
 
-        // 2. train and test DT classifier with no depth limit; split fraction = 0.8
-        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
-        dtClassifier.setDepthLimit(-1);
-        trainTestClassifier("2. Final stats from DT classifier (no depth limit & 80/20 split over 100 iters.):", dtClassifier, data, 0.8);
-
-        // 3. train and test DT classifier with depth limit ranging from 0,1,2,...,10; split fraction = 0.8
-        for (int depthLimit = 0; depthLimit <= 10; depthLimit++) {
-            dtClassifier.setDepthLimit(depthLimit);
-
-            String expDescription = String.format("3-%d. Final stats from DT classifier (depth limit of %d & 80/20 split over 100 iters.):", depthLimit, depthLimit);
-            trainTestClassifier(expDescription, dtClassifier, data, 0.8);
+        // 2a. train and test perceptron classifier with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
+            pClassifier.setIterations(maxIters);
+            String expDescription = String.format("2a. Final stats from perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifier(expDescription, pClassifier, data, 0.8);
         }
 
-        // 4. train and test DT classifier (on train AND test data) with depth limit ranging from 0,1,2,...,10; split fraction = 0.8
-        for (int depthLimit = 0; depthLimit <= 10; depthLimit++) {
-            dtClassifier.setDepthLimit(depthLimit);
-
-            String expDescription = String.format("4-%d. Final stats from DT classifier (depth limit of %d & 80/20 split over 100 iters.):", depthLimit, depthLimit);
-            trainTestClassifierWithTestAccuracy(expDescription, dtClassifier, data, 0.8);
+        // 2b. train and test perceptron classifier with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
+            apClassifier.setIterations(maxIters);
+            String expDescription = String.format("2b. Final stats from average perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifier(expDescription, apClassifier, data, 0.8);
         }
-
-        // 5. train and test DT classifier (on train AND test data) with no depth limit; split fraction ranging from 0.05,0.10,0.15,...,0.90
-        dtClassifier.setDepthLimit(-1);
-        int expNumber = 0;
-        for (double splitFraction = 0.05; splitFraction < 0.91; splitFraction += 0.05) {
-            String expDescription = String.format("5-%d. Final stats from DT classifier (no depth limit & %f train split over 100 iters.):", expNumber, splitFraction);
-            trainTestClassifierWithTestAccuracy(expDescription, dtClassifier, data, splitFraction);
-            expNumber++;
-
-         */
     }
 
     /**

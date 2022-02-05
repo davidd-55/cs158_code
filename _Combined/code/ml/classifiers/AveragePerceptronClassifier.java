@@ -11,7 +11,6 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
 
     private Double avgBias;
     private ArrayList<Double> avgWeights;
-    private int totalCounter;
 
     /**
      * Initialize the average perceptron classifier. At initialization, the perceptron
@@ -21,7 +20,6 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
     public AveragePerceptronClassifier() {
         this.avgBias = 0.0;
         this.avgWeights = new ArrayList<>();
-        this.totalCounter = 1;
     }
 
     /**
@@ -32,8 +30,11 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
      */
     @Override
     @SuppressWarnings("unchecked")
-    // TODO: this has not been changed from reg perceptron
     public void train(DataSet dataSet) {
+        // initialize updated and totalCount
+        int updated = 0;
+        int totalCounter = 0;
+
         // reset weights and bias to zero
         this.reset(dataSet.getAllFeatureIndices().size());
 
@@ -50,23 +51,47 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
             for (Example e : clonedData) {
 
                 // isolate prediction and feature label
-                double cLabel = classify(e);
+                double cLabel = classifyRegular(e);
                 double fLabel = e.getLabel();
 
                 // update if prediction based on current model is wrong
                 if (cLabel * fLabel <= 0) {
 
-                    // update all weights with wi = wi + (fi * fLabel)
+                    // update our final, weighted, avg weights
                     for (int j = 0; j < this.weights.size(); j++) {
-                        double updatedWeight = this.weights.get(j) + (e.getFeature(j) * fLabel);
-                        this.weights.set(j, updatedWeight);
+                        double updatedAvgWeight = this.avgWeights.get(j) + (updated * this.weights.get(j));
+                        this.avgWeights.set(j, updatedAvgWeight);
+                    }
+
+                    // update avg bias
+                    this.avgBias += updated * this.bias;
+
+                    // update all weights with wi = wi + (fi * fLabel)
+                    for (int k = 0; k < this.weights.size(); k++) {
+                        double updatedWeight = this.weights.get(k) + (e.getFeature(k) * fLabel);
+                        this.weights.set(k, updatedWeight);
                     }
 
                     // update bias with actual label
                     this.bias += fLabel;
+
+                    // reset updated
+                    updated = 0;
                 }
+
+                // update updated and total counter regardless of model update
+                updated += 1;
+                totalCounter += 1;
             }
         }
+
+        // dividing average weights and bias by total number of examples
+        for (int i = 0; i < this.weights.size(); i++) {
+            double avgWeight = this.avgWeights.get(i) / totalCounter;
+            this.avgWeights.set(i, avgWeight);
+        }
+
+        this.avgBias = this.avgBias / totalCounter;
     }
 
     /**
@@ -80,7 +105,7 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
     // TODO: double check that we only compared against avg weights!
     public double classify(Example example) {
         // get number of weights
-        int weightCount = this.weights.size();
+        int weightCount = this.avgWeights.size();
 
         // check for weights count == feature count
         if (weightCount != example.getFeatureSet().size()) {
@@ -113,6 +138,46 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
     }
 
     /**
+     * Classify the example based on regular weights and bias.  Should only be called as a component of training.
+     *
+     * @param example an example from a test data set
+     * @return the class label predicted by the regular classifier for this example (1 or -1)
+     */
+    private double classifyRegular(Example example) {
+        // get number of weights
+        int weightCount = this.weights.size();
+
+        // check for weights count == feature count
+        if (weightCount != example.getFeatureSet().size()) {
+            String msg = String.format(
+                    "expected example feature count to match model. example feature count: %d model feature count: %d",
+                    example.getFeatureSet().size(),
+                    weightCount);
+
+            throw new IllegalArgumentException(msg);
+        }
+
+        // init classification
+        double classification = 0.0;
+
+        // w1f1 + w2f2 + ... + wnfn
+        for (int i = 0; i < weightCount; i++) {
+            classification += this.weights.get(i) * example.getFeature(i);
+        }
+
+        // add bias
+        classification += this.bias;
+
+        // TODO: check that < is okay
+        // return 1 or -1 based on classification sign
+        if (classification < 0) {
+            return -1.0;
+        } else {
+            return 1.0;
+        }
+    }
+
+    /**
      * Helper method for resetting a perceptron's regular and avg. weights/bias to 0.0
      *
      * @param weightCount amount of weights initialized to 0.0 needed
@@ -130,5 +195,31 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
             this.weights.add(0.0);
             this.avgWeights.add(0.0);
         }
+    }
+
+    /**
+     * Generates a string representation of the avg perceptron weights and bias
+     * in the format '0:weight_0 1:weight_1 2:weight2 ... n:weight_n b-value'
+     *
+     * @return the string representation of the perceptron
+     */
+    public String toString() {
+        // if avg weights haven't been set or are empty, return empty string
+        if (this.avgWeights.isEmpty()) {
+            return "";
+        }
+
+        // init StringBuilder
+        StringBuilder s = new StringBuilder();
+
+        // add avg weights to string
+        for (int i = 0; i < this.avgWeights.size(); i++) {
+            s.append(String.format("%d:%f ", i, this.avgWeights.get(i)));
+        }
+
+        // add avg bias
+        s.append(String.format("%f", this.avgBias));
+
+        return s.toString();
     }
 }
