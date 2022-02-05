@@ -38,14 +38,14 @@ public class Experimenter {
         for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
             pClassifier.setIterations(maxIters);
             String expDescription = String.format("2a. Final stats from perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifier(expDescription, pClassifier, data, 0.8);
+            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, data, 0.8);
         }
 
         // 2b. train and test perceptron classifier with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
         for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
             apClassifier.setIterations(maxIters);
             String expDescription = String.format("2b. Final stats from average perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifier(expDescription, apClassifier, data, 0.8);
+            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, data, 0.8);
         }
     }
 
