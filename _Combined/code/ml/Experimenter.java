@@ -5,9 +5,9 @@ import ml.classifiers.PerceptronClassifier;
 import ml.classifiers.AveragePerceptronClassifier;
 
 /**
- * A class to run experiments for our classifier
+ * A class to run experiments for perceptron classifiers
  *
- * Prepared for CS158 Assignment 02. Authored by David D'Attile
+ * Prepared for CS158 Assignment 03. Authored by David D'Attile
  */
 public class Experimenter {
 
@@ -17,9 +17,9 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
-        // TODO: when done, port to A03 folder and run!
         // parse data with helper
-        DataSet data = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv");
+        DataSet titanicData = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv");
+        DataSet diabetesData = getData("/Users/daviddattile/Dev/cs158_code/_Combined/data/PimaNativeDiabetesData.csv");
 
         // init classifiers
         PerceptronClassifier pClassifier = new PerceptronClassifier();
@@ -28,24 +28,40 @@ public class Experimenter {
 
         // 1a. train and test perceptron classifier with max iteration of 10; split fraction = 0.8
         pClassifier.setIterations(10);
-        trainTestClassifier("1a. Final stats from perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, data, 0.8);
+        trainTestClassifier("1a. Final stats from perceptron classifier (titanic, max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, titanicData, 0.8);
 
         // 1b. train and test avg perceptron classifier with max iteration of 10; split fraction = 0.8
         apClassifier.setIterations(10);
-        trainTestClassifier("1b. Final stats from average perceptron classifier (max iteration of 10 & 80/20 split over 100 iters.):", apClassifier, data, 0.8);
+        trainTestClassifier("1b. Final stats from average perceptron classifier (titanic, max iteration of 10 & 80/20 split over 100 iters.):", apClassifier, titanicData, 0.8);
 
-        // 2a. train and test perceptron classifier with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        // 2a. train and test perceptron classifier (titanic) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
         for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
             pClassifier.setIterations(maxIters);
-            String expDescription = String.format("2a. Final stats from perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, data, 0.8);
+            String expDescription = String.format("2a. Final stats from perceptron classifier (titanic, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, titanicData, 0.8);
         }
 
-        // 2b. train and test perceptron classifier with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        // 2b. train and test perceptron classifier (titanic) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
         for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
             apClassifier.setIterations(maxIters);
-            String expDescription = String.format("2b. Final stats from average perceptron classifier (max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, data, 0.8);
+            String expDescription = String.format("2b. Final stats from average perceptron classifier (titanic, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, titanicData, 0.8);
+        }
+
+        // Question 3 uses ClassifierTimer
+
+        // 4a. train and test perceptron classifier (diabetes) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
+            pClassifier.setIterations(maxIters);
+            String expDescription = String.format("4a. Final stats from perceptron classifier (diabetes, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, diabetesData, 0.8);
+        }
+
+        // 4b. train and test perceptron classifier (diabetes) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
+        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
+            apClassifier.setIterations(maxIters);
+            String expDescription = String.format("4b. Final stats from average perceptron classifier (diabetes, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
+            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, diabetesData, 0.8);
         }
     }
 

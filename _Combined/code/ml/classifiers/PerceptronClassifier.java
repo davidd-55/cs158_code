@@ -40,6 +40,9 @@ public class PerceptronClassifier implements Classifier {
         // isolate and clone data for training
         ArrayList<Example> clonedData = (ArrayList<Example>)dataSet.getData().clone();
 
+        // get weight counts
+        int weightCount = this.weights.size();
+
         // train for maxIterations iterations
         for (int i = 0; i < maxIterations; i++) {
 
@@ -49,21 +52,17 @@ public class PerceptronClassifier implements Classifier {
             // loop through shuffled data for training
             for (Example e : clonedData) {
 
-                // isolate prediction and feature label
-                double cLabel = classify(e);
-                double fLabel = e.getLabel();
-
                 // update if prediction based on current model is wrong
-                if (cLabel * fLabel <= 0) {
+                if (classify(e) * e.getLabel() <= 0) {
 
-                    // update all weights with wi = wi + (fi * fLabel)
-                    for (int j = 0; j < this.weights.size(); j++) {
-                        double updatedWeight = this.weights.get(j) + (e.getFeature(j) * fLabel);
+                    // update all weights with wi = wi + (fi * label)
+                    for (int j = 0; j < weightCount; j++) {
+                        double updatedWeight = this.weights.get(j) + (e.getFeature(j) * e.getLabel());
                         this.weights.set(j, updatedWeight);
                     }
 
                     // update bias with actual label
-                    this.bias += fLabel;
+                    this.bias += e.getLabel();
                 }
             }
         }
