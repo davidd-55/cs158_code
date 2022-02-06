@@ -49,7 +49,7 @@ public class ClassifierTimer {
 	}
 	
 	public static void main(String[] args){
-		String csvFile = "/Users/daviddattile/Dev/cs158_code/_Combined/data/titanic-train.csv";
+		String csvFile = "/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv";
 		DataSet dataset = new DataSet(csvFile);
 
 		int numRuns = 10;
