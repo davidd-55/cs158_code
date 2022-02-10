@@ -1,5 +1,8 @@
 package ml;
 
+import ml.data.DataSetSplit;
+import ml.data.Example;
+import ml.data.DataSet;
 import ml.classifiers.Classifier;
 import ml.classifiers.PerceptronClassifier;
 import ml.classifiers.AveragePerceptronClassifier;
@@ -82,9 +85,9 @@ public class Experimenter {
         // evaluate trained classifier
         for (int i = 1; i <= 100; i++) {
             // split data
-            DataSet[] dataSplit = dataSet.split(splitFraction);
-            DataSet trainData = dataSplit[0];
-            DataSet testData = dataSplit[1];
+            DataSetSplit dataSplit = dataSet.split(splitFraction);
+            DataSet trainData = dataSplit.getTrain();
+            DataSet testData = dataSplit.getTest();
 
             // train classifier
             classifier.train(trainData);
@@ -126,9 +129,9 @@ public class Experimenter {
         // evaluate trained classifier
         for (int i = 1; i <= 100; i++) {
             // split data
-            DataSet[] dataSplit = dataSet.split(splitFraction);
-            DataSet trainData = dataSplit[0];
-            DataSet testData = dataSplit[1];
+            DataSetSplit dataSplit = dataSet.split(splitFraction);
+            DataSet trainData = dataSplit.getTrain();
+            DataSet testData = dataSplit.getTest();
 
             // train classifier
             classifier.train(trainData);

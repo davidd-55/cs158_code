@@ -1,4 +1,4 @@
-package ml;
+package ml.data;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -16,7 +16,6 @@ import java.util.Set;
  * @author dkauchak
  */
 public class DataSet {
-	private String[] headers; // the headers/feature names
 	private ArrayList<Example> data = new ArrayList<Example>(); // the data/examples in this data set
 	// the mapping from feature indices to the name of the feature
 	private HashMap<Integer, String> featureMap = new HashMap<Integer, String>();
@@ -78,7 +77,7 @@ public class DataSet {
 			}
 			
 			// parse the headers
-			headers = line.split(",");
+			String[] headers = line.split(",");
 			
 			int featureIndex = 0;
 			
@@ -102,14 +101,13 @@ public class DataSet {
 	}
 	
 	/**
-	 * Internal constructor for copying the data set (or most of it)
+	 * Constructs a new empty dataset (i.e. no examples) with the features
+	 * specified in the featuremap
 	 * 
-	 * @param s
+	 * @param featureMap
 	 */
-	@SuppressWarnings("unchecked")
-	private DataSet(DataSet s){
-		this.headers = s.headers.clone();
-		this.featureMap = (HashMap<Integer,String>)s.featureMap.clone();
+	public DataSet(HashMap<Integer, String> featureMap){
+		this.featureMap = (HashMap<Integer,String>)featureMap.clone();
 	}
 	
 	/**
@@ -132,6 +130,34 @@ public class DataSet {
 	}
 	
 	/**
+	 * Add all of the examples in addMe to this data set.
+	 * Note: this does NOT change the feature map for this
+	 * data set so this should only be used to add examples that
+	 * have the same features that the data set was already initialized
+	 * with.
+	 * 
+	 * @param addMe
+	 */
+	public void addData(ArrayList<Example> addMe){
+		for( Example e: addMe ){
+			data.add(e);
+		}
+	}
+
+	/**
+	 * Add example e to this data set.
+	 * Note: this does NOT change the feature map for this
+	 * data set so this should only be used to add examples that
+	 * have the same features that the data set was already initialized
+	 * with.
+	 * 
+	 * @param e
+	 */
+	public void addData(Example e){
+		data.add(e);
+	}
+	
+	/**
 	 * Get all of the feature indices that are contained in this
 	 * data set.
 	 * 
@@ -147,10 +173,9 @@ public class DataSet {
 	 * - total_size - (total_size*fraction)
 	 * 
 	 * @param fraction the proportion to allocated to the first data set in the split
-	 * @return two data sets representing a fraction split of the data
+	 * @return a split of the data
 	 */
-	@SuppressWarnings("unchecked")
-	public DataSet[] split(double fraction){
+	public DataSetSplit split(double fraction){
 		ArrayList<Example> newdata = (ArrayList<Example>)data.clone();
 		Collections.shuffle(newdata, new Random(System.nanoTime()));
 		
@@ -167,13 +192,35 @@ public class DataSet {
 			}
 		}
 		
-		DataSet[] splits = new DataSet[2];
-		splits[0] = new DataSet(this);
-		splits[0].data = train;
+		DataSet dTrain = new DataSet(featureMap);
+		dTrain.addData(train);
 		
-		splits[1] = new DataSet(this);
-		splits[1].data = test;
-		
-		return splits;
+		DataSet dTest = new DataSet(featureMap);
+		dTest.addData(test);
+
+		return new DataSetSplit(dTrain, dTest);
 	}	
+	
+	/**
+	 * Get a cross-validation of this data set with num splits.  The
+	 * data is split WITHOUT changing the order or the data.
+	 * 
+	 * @param num
+	 * @return
+	 */
+	public CrossValidationSet getCrossValidationSet(int num){
+		return new CrossValidationSet(this, num);
+	}
+	
+	/**
+	 * Get a cross-validation of this data set with num splits.  The
+	 * data is randomized before splitting (though the data in this
+	 * data set itself will not change).
+	 * 
+	 * @param num
+	 * @return
+	 */
+	public CrossValidationSet getRandomCrossValidationSet(int num){
+		return new CrossValidationSet(this, num, true);
+	}
 }

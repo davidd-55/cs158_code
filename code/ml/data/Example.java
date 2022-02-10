@@ -1,8 +1,9 @@
-package ml;
+package ml.data;
 
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -17,6 +18,16 @@ public class Example {
 	// feature index to the actual name.
 	private HashMap<Integer, Double> sparseData = new HashMap<Integer, Double>();
 	private double label;  // the label (assuming it has one)
+	
+	public Example(){
+		sparseData = new HashMap<Integer, Double>();
+	}
+	
+	public Example(Example e){
+		// copy everything
+		label = e.label;
+		sparseData = new HashMap<Integer,Double>(e.sparseData);
+	}
 	
 	/**
 	 * Add a feature with value to this example.
@@ -36,6 +47,16 @@ public class Example {
 	 */
 	public double getFeature(int featureNum){
 		return sparseData.get(featureNum);
+	}
+	
+	/**
+	 * Set the values of the associated features with feature index featureNum.
+	 * 
+	 * @param featureNum
+	 * @param value
+	 */
+	public void setFeature(int featureNum, double value){
+		sparseData.put(featureNum, value);
 	}
 	
 	/**

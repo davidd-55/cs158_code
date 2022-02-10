@@ -1,4 +1,4 @@
-package ml;
+package ml.data;
 
 import java.util.Iterator;
 import java.io.*;

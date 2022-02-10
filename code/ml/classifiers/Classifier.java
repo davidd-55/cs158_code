@@ -1,7 +1,7 @@
 package ml.classifiers;
 
-import ml.Example;
-import ml.DataSet;
+import ml.data.DataSet;
+import ml.data.Example;
 
 /**
  * Interface for a classifier.

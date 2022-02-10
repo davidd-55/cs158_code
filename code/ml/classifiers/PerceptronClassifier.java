@@ -1,7 +1,7 @@
 package ml.classifiers;
 
-import ml.DataSet;
-import ml.Example;
+import ml.data.DataSet;
+import ml.data.Example;
 import java.util.*;
 
 /**

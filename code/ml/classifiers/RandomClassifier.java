@@ -2,8 +2,8 @@ package ml.classifiers;
 
 import java.util.Random;
 
-import ml.Example;
-import ml.DataSet;
+import ml.data.DataSet;
+import ml.data.Example;
 
 /**
  * A classifier that randomly labels examples as either -1 or 1.
@@ -21,6 +21,6 @@ public class RandomClassifier implements Classifier{
 
 	@Override
 	public double classify(Example example) {
-            return rand.nextInt(2) == 0 ? 1 : -1;
+		return rand.nextInt(2) == 1? 1.0 : -1.0;
 	}
 }

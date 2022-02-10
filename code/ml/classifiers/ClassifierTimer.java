@@ -1,7 +1,8 @@
 package ml.classifiers;
 
-import ml.DataSet;
-import ml.Example;
+import ml.data.DataSet;
+import ml.data.DataSetSplit;
+import ml.data.Example;
 
 public class ClassifierTimer {
 	/**
@@ -16,9 +17,9 @@ public class ClassifierTimer {
 		long classifySum = 0;
 		
 		for( int i = 0; i < numRuns; i++ ){
-			DataSet[] temp = dataset.split(0.8);			
-			DataSet train = temp[0];
-			DataSet test = temp[1];
+			DataSetSplit temp = dataset.split(0.8);
+			DataSet train = temp.getTrain();
+			DataSet test = temp.getTest();
 
 			System.gc();
 			long start = System.currentTimeMillis();
