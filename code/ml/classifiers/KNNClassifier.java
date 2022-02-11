@@ -62,12 +62,35 @@ public class KNNClassifier implements Classifier {
         this.k = k;
     }
 
+    /**
+     * Calculates the euclidian distance between the features of two examples. Throws an
+     * error if the two examples have a different feature count.
+     *
+     * @param e1
+     * @param e2
+     * @return a double representing the euclidian distance between the two given examples
+     */
     private double calculateDistance(Example e1, Example e2) {
+        // init feature counts
         int e1FeatureCount = e1.getFeatureSet().size();
         int e2FeatureCount = e2.getFeatureSet().size();
 
-        if (e1)
+        // basic error check for incompatible features
+        if (e1 != e2) {
+            String msg = String.format(
+                    "cannot calculate distance between two examples with feature counts %d (e1), %d (e2)",
+                    e1FeatureCount,
+                    e2FeatureCount);
+            throw new IllegalArgumentException(msg);
+        }
 
-        for (int i = 0; i < )
+        // calculate distance except final sqrt
+        double d = 0.0;
+        for (int i = 0; i < e1FeatureCount; i++) {
+            d += Math.pow(e1.getFeature(i) - e2.getFeature(i), 2);
+        }
+
+        // return final distance
+        return Math.sqrt(d);
     }
 }
