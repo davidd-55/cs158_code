@@ -1,6 +1,6 @@
 package ml.data;
 
-public class ExampleWithDistance implements Comparable {
+public class ExampleWithDistance implements Comparable<ExampleWithDistance> {
     private final Example example;
     private final double distance;
 
@@ -17,12 +17,19 @@ public class ExampleWithDistance implements Comparable {
     public Example getExample() { return this.example; }
 
     /**
-     * Helper function for calculating the distance between this example and
-     * the one it was initially compared to.
+     * Helper function for retreiving the calculated the distance between this example
+     * and the one it was initially compared to.
      *
      * @return the calculated distance
      */
     public double getDistance() { return this.distance; }
+
+    /**
+     * Helper function for accessing the stored example's label.
+     *
+     * @return the stored example's label
+     */
+    public double getLabel() { return this.example.getLabel(); }
 
     /**
      * Compares this object with the specified object for order.  Returns a
@@ -43,7 +50,7 @@ public class ExampleWithDistance implements Comparable {
      * x.compareTo(y)==0} implies that {@code signum(x.compareTo(z))
      * == signum(y.compareTo(z))}, for all {@code z}.
      *
-     * @param o the object to be compared.
+     * @param other the object to be compared.
      * @return a negative integer, zero, or a positive integer as this object
      * is less than, equal to, or greater than the specified object.
      * @throws NullPointerException if the specified object is null
@@ -57,14 +64,7 @@ public class ExampleWithDistance implements Comparable {
      * inconsistent with equals."
      */
     @Override
-    public int compareTo(Object o) {
-        if (o.getClass() != ExampleWithDistance.class) {
-            String msg = String.format("expected ExampleWithDistance class for comparison; received %s", o.getClass().toString());
-            throw new ClassCastException(msg);
-        }
-
-        ExampleWithDistance castO = (ExampleWithDistance) o;
-
-        return Double.compare(this.distance, castO.getDistance());
+    public int compareTo(ExampleWithDistance other) {
+        return Double.compare(this.distance, other.getDistance());
     }
 }

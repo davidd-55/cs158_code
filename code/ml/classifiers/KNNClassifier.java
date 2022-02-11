@@ -5,6 +5,13 @@ import ml.data.Example;
 import ml.data.ExampleWithDistance;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.*;
 
 /**
  * A class to represent a K Nearest Neighbor classifier
@@ -44,7 +51,25 @@ public class KNNClassifier implements Classifier {
      */
     @Override
     public double classify(Example example) {
-        return 0;
+        // init examples w/distance array
+        List<ExampleWithDistance> esWithDistance = new ArrayList<>();
+
+        // calculate distance from the example to all other comparison examples
+        for (Example compExample : this.comparisonExamples) {
+            ExampleWithDistance eWithDistance = new ExampleWithDistance(compExample, calculateDistance(example, compExample));
+            esWithDistance.add(eWithDistance);
+        }
+
+        // sort from lowest --> highest distance (using ExampleWithDistance)
+        Collections.sort(esWithDistance);
+
+        // trim to top-K examples and account for there being a higher K
+        // than features potentially available
+        int maxIndex = Math.min(esWithDistance.size(), this.k);
+        List<ExampleWithDistance> topKExamples = esWithDistance.subList(0, maxIndex);
+
+        // return majority class from top-K examples
+        return findMajorityLabel(topKExamples);
     }
 
     /**
@@ -59,6 +84,8 @@ public class KNNClassifier implements Classifier {
             String msg = String.format("expected a positive K-value; received %d", k);
             throw new IllegalArgumentException(msg);
         }
+
+        // set K-value
         this.k = k;
     }
 
@@ -70,13 +97,13 @@ public class KNNClassifier implements Classifier {
      * @param e2
      * @return a double representing the euclidian distance between the two given examples
      */
-    private double calculateDistance(Example e1, Example e2) {
+    private static double calculateDistance(Example e1, Example e2) {
         // init feature counts
         int e1FeatureCount = e1.getFeatureSet().size();
         int e2FeatureCount = e2.getFeatureSet().size();
 
         // basic error check for incompatible features
-        if (e1 != e2) {
+        if (e1FeatureCount != e2FeatureCount) {
             String msg = String.format(
                     "cannot calculate distance between two examples with feature counts %d (e1), %d (e2)",
                     e1FeatureCount,
@@ -92,5 +119,26 @@ public class KNNClassifier implements Classifier {
 
         // return final distance
         return Math.sqrt(d);
+    }
+
+
+    /**
+     * Retrieves the majority label ina collection of examples w/distance.
+     *
+     * @param data
+     * @return The majority label of the supplied data set.
+     */
+    private static double findMajorityLabel(List<ExampleWithDistance> data) {
+
+        // this is a general solution that will work for data with labels that
+        // aren't just binary!
+        return data.stream()
+                .map(ExampleWithDistance::getLabel)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow()
+                .getKey();
     }
 }
