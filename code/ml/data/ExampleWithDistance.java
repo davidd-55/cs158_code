@@ -31,6 +31,7 @@ public class ExampleWithDistance implements Comparable<ExampleWithDistance> {
      */
     public double getLabel() { return this.example.getLabel(); }
 
+
     /**
      * Compares this object with the specified object for order.  Returns a
      * negative integer, zero, or a positive integer as this object is less
@@ -50,7 +51,7 @@ public class ExampleWithDistance implements Comparable<ExampleWithDistance> {
      * x.compareTo(y)==0} implies that {@code signum(x.compareTo(z))
      * == signum(y.compareTo(z))}, for all {@code z}.
      *
-     * @param other the object to be compared.
+     * @param o the object to be compared.
      * @return a negative integer, zero, or a positive integer as this object
      * is less than, equal to, or greater than the specified object.
      * @throws NullPointerException if the specified object is null
@@ -64,7 +65,7 @@ public class ExampleWithDistance implements Comparable<ExampleWithDistance> {
      * inconsistent with equals."
      */
     @Override
-    public int compareTo(ExampleWithDistance other) {
-        return Double.compare(this.distance, other.getDistance());
+    public int compareTo(ExampleWithDistance o) {
+        return Double.compare(this.distance, o.getDistance());
     }
 }

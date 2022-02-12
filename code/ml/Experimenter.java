@@ -1,12 +1,13 @@
 package ml;
 
 import ml.classifiers.KNNClassifier;
-import ml.data.DataSetSplit;
-import ml.data.Example;
-import ml.data.DataSet;
+import ml.data.*;
 import ml.classifiers.Classifier;
 import ml.classifiers.PerceptronClassifier;
 import ml.classifiers.AveragePerceptronClassifier;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class to run experiments for perceptron classifiers
@@ -21,22 +22,66 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
-        // parse data with helper
-        DataSet titanicData = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv");
+
+        // init feature processors
+        ExampleNormalizer exampleNormalizer = new ExampleNormalizer();
 
         // init classifiers
         KNNClassifier knnClassifier = new KNNClassifier();
 
-        // train and test perceptron classifier with max iteration of 10; split fraction = 0.8
+        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
         knnClassifier.setK(3);
-        trainTestClassifier("1a. Final stats from KNN classifier (titanic, K-value of 3 & 80/20 split over 100 iters.):", knnClassifier, titanicData, 0.8);
+        trainTestClassifier(
+                "1a. Final stats from KNN classifier (titanic, K-value of 3, no preprocessor & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>(),
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
 
+        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
+        knnClassifier.setK(3);
+        trainTestClassifier(
+                "1b. Final stats from KNN classifier (titanic, K-value of 3, features normalized & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>() {{add(exampleNormalizer);}},
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
+
+        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
         knnClassifier.setK(5);
-        trainTestClassifier("1b. Final stats from KNN classifier (titanic, K-value of 5 & 80/20 split over 100 iters.):", knnClassifier, titanicData, 0.8);
+        trainTestClassifier(
+                "1c. Final stats from KNN classifier (titanic, K-value of 5, no preprocessor & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>(),
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
 
+        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
+        knnClassifier.setK(5);
+        trainTestClassifier(
+                "1d. Final stats from KNN classifier (titanic, K-value of 5, features normalized & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>() {{add(exampleNormalizer);}},
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
+
+        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
         knnClassifier.setK(7);
-        trainTestClassifier("1c. Final stats from KNN classifier (titanic, K-value of 7 & 80/20 split over 100 iters.):", knnClassifier, titanicData, 0.8);
+        trainTestClassifier(
+                "1e. Final stats from KNN classifier (titanic, K-value of 7, no preprocessor & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>(),
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
 
+        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
+        knnClassifier.setK(7);
+        trainTestClassifier(
+                "1f. Final stats from KNN classifier (titanic, K-value of 7, features normalized & 80/20 split over 100 iters.):",
+                knnClassifier,
+                new ArrayList<>() {{add(exampleNormalizer);}},
+                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
+                0.8);
 
 
         /*
@@ -99,7 +144,12 @@ public class Experimenter {
      * @param dataSet
      * @param splitFraction
      */
-    public static void trainTestClassifier(String expDescription, Classifier classifier, DataSet dataSet, double splitFraction) {
+    public static void trainTestClassifier(
+            String expDescription,
+            Classifier classifier,
+            List<DataPreprocessor> preprocessors,
+            DataSet dataSet,
+            double splitFraction) {
         // init accuracy stats
         int correctGuesses = 0;
         int totalGuesses = 0;
@@ -110,6 +160,12 @@ public class Experimenter {
             DataSetSplit dataSplit = dataSet.split(splitFraction);
             DataSet trainData = dataSplit.getTrain();
             DataSet testData = dataSplit.getTest();
+
+            // normalize data with specified preprocessors
+            for (DataPreprocessor preprocessor : preprocessors) {
+                preprocessor.preprocessTrain(trainData);
+                preprocessor.preprocessTest(testData);
+            }
 
             // train classifier
             classifier.train(trainData);
