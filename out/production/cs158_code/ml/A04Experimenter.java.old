@@ -1,19 +1,19 @@
 package ml;
 
+import ml.classifiers.AveragePerceptronClassifier;
+import ml.classifiers.Classifier;
 import ml.classifiers.KNNClassifier;
 import ml.data.*;
-import ml.classifiers.Classifier;
-import ml.classifiers.AveragePerceptronClassifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A class to run k-NN and Avg. Perceptron classifier experiments
+ * A class to run experiments for perceptron classifiers
  *
- * Prepared for CS158 Assignment 04. Authored by David D'Attile
+ * Prepared for CS158 Assignment 03. Authored by David D'Attile
  */
-public class Experimenter {
+public class A04Experimenter {
 
     /**
      * Main method for running the experiments specified for Assignment 2.

@@ -1,5 +1,10 @@
 package ml.data;
 
+/**
+ * A helper class to store Examples and their calculated distance from another example.
+ *
+ * Prepared for CS158 Assignment 04. Authored by David D'Attile
+ */
 public class ExampleWithDistance implements Comparable<ExampleWithDistance> {
     private final Example example;
     private final double distance;
