@@ -30,10 +30,14 @@ public class FeatureNormalizer implements DataPreprocessor{
     @Override
     public void preprocessTrain(DataSet train) {
 
+        // clear means and standard deviations arrays
+        this.trainFeatureMeans.clear();
+        this.trainFeatureStandardDeviations.clear();
+
         // get feature count
         int featureCount = train.getFeatureMap().size();
 
-        // calculate feature means and standard deviations
+        // calculate and set feature means and standard deviations
         for (int i = 0; i < featureCount; i++) {
             double featureMean = calculateFeatureMean(train, i);
             this.trainFeatureMeans.add(featureMean);

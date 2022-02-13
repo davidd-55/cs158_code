@@ -23,188 +23,86 @@ public class Experimenter {
      */
     public static void main(String[] args) {
 
-        // init feature processors
+        // init binary and real-valued datasets
+        DataSet titanicB = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv");
+        DataSet titanicR = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv");
+
+        // init feature processors & lists
         ExampleNormalizer exampleNormalizer = new ExampleNormalizer();
         FeatureNormalizer featureNormalizer = new FeatureNormalizer();
+        ArrayList<DataPreprocessor> exOnly = new ArrayList<>(){{add(exampleNormalizer);}};
+        ArrayList<DataPreprocessor> featOnly = new ArrayList<>(){{add(featureNormalizer);}};
+        ArrayList<DataPreprocessor> both = new ArrayList<>(){{add(exampleNormalizer);add(featureNormalizer);}};
 
         // init classifiers
+        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
         KNNClassifier knnClassifier = new KNNClassifier();
 
-        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(3);
-        trainTestClassifier(
-                "1a. Final stats from KNN classifier (titanic, K-value of 3, no preprocessor & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>(),
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(3);
-        trainTestClassifier(
-                "1b. Final stats from KNN classifier (titanic, K-value of 3, examples normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(3);
-        trainTestClassifier(
-                "1c. Final stats from KNN classifier (titanic, K-value of 3, features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 3; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(3);
-        trainTestClassifier(
-                "1d. Final stats from KNN classifier (titanic, K-value of 3, examples & features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer); add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(5);
-        trainTestClassifier(
-                "2a. Final stats from KNN classifier (titanic, K-value of 5, no preprocessor & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>(),
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(5);
-        trainTestClassifier(
-                "2b. Final stats from KNN classifier (titanic, K-value of 5, examples normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(5);
-        trainTestClassifier(
-                "2c. Final stats from KNN classifier (titanic, K-value of 5, features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 5; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(5);
-        trainTestClassifier(
-                "2d. Final stats from KNN classifier (titanic, K-value of 5, examples & features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer); add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(7);
-        trainTestClassifier(
-                "3a. Final stats from KNN classifier (titanic, K-value of 7, no preprocessor & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>(),
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(7);
-        trainTestClassifier(
-                "3b. Final stats from KNN classifier (titanic, K-value of 7, examples normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(7);
-        trainTestClassifier(
-                "3c. Final stats from KNN classifier (titanic, K-value of 7, features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-        // train and test KNN classifier with K val of 7; no preprocessing; split fraction = 0.8
-        knnClassifier.setK(7);
-        trainTestClassifier(
-                "3d. Final stats from KNN classifier (titanic, K-value of 7, examples & features normalized & 80/20 split over 100 iters.):",
-                knnClassifier,
-                new ArrayList<>() {{add(exampleNormalizer); add(featureNormalizer);}},
-                getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv"),
-                0.8);
-
-
-        /*
-        // parse data with helper
-        DataSet titanicData = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv");
-        DataSet diabetesData = getData("/Users/daviddattile/Dev/cs158_code/data/PimaNativeDiabetesData.csv");
-
-        // init classifiers
-        PerceptronClassifier pClassifier = new PerceptronClassifier();
-        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
-
-
-        // 1a. train and test perceptron classifier with max iteration of 10; split fraction = 0.8
-        pClassifier.setIterations(10);
-        trainTestClassifier("1a. Final stats from perceptron classifier (titanic, max iteration of 10 & 80/20 split over 100 iters.):", pClassifier, titanicData, 0.8);
-
-        // 1b. train and test avg perceptron classifier with max iteration of 10; split fraction = 0.8
+        // 1. Avg. Perceptron performance on 10-fold cross validation; titanic binary; max iterations set at 10
         apClassifier.setIterations(10);
-        trainTestClassifier("1b. Final stats from average perceptron classifier (titanic, max iteration of 10 & 80/20 split over 100 iters.):", apClassifier, titanicData, 0.8);
+        CrossValidationSet cvSetBinary = new CrossValidationSet(titanicB, 10);
+        double accuracy = 0.0;
 
-        // 2a. train and test perceptron classifier (titanic) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
-        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
-            pClassifier.setIterations(maxIters);
-            String expDescription = String.format("2a. Final stats from perceptron classifier (titanic, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, titanicData, 0.8);
+        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
+            DataSetSplit foldSet = cvSetBinary.getValidationSet(foldIndex, true);
+            String expDesc = String.format("1-%d. Final stats from AP classifier (titanicB, max iters 10, no preprocessor over 100 iters.):", foldIndex);
+            accuracy += trainTestClassifier(expDesc, apClassifier, new ArrayList<>(), foldSet);
         }
 
-        // 2b. train and test perceptron classifier (titanic) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
-        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
-            apClassifier.setIterations(maxIters);
-            String expDescription = String.format("2b. Final stats from average perceptron classifier (titanic, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, titanicData, 0.8);
+        System.out.printf("1-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
+
+        // 2. Avg. Perceptron performance on 10-fold cross validation; titanic real valued; max iterations set at 10
+        apClassifier.setIterations(10);
+        CrossValidationSet cvSetReal = new CrossValidationSet(titanicR, 10);
+        accuracy = 0.0;
+
+        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
+            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
+            String expDesc = String.format("2-%d. Final stats from AP classifier (titanicR, max iters 10, no preprocessor over 100 iters.):", foldIndex);
+            accuracy += trainTestClassifier(expDesc, apClassifier, new ArrayList<>(), foldSet);
         }
 
-        // Question 3 uses ClassifierTimer
+        System.out.printf("2-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
 
-        // 4a. train and test perceptron classifier (diabetes) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
-        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
-            pClassifier.setIterations(maxIters);
-            String expDescription = String.format("4a. Final stats from perceptron classifier (diabetes, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, pClassifier, diabetesData, 0.8);
+        // 3a. KNN performance on 10-fold cross validation; titanic binary; K set at 3
+        knnClassifier.setK(3);
+        accuracy = 0.0;
+
+        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
+            DataSetSplit foldSet = cvSetBinary.getValidationSet(foldIndex, true);
+            String expDesc = String.format("3a-%d. Final stats from KNN classifier (titanicB, max iters 10, no preprocessor over 100 iters.):", foldIndex);
+            accuracy += trainTestClassifier(expDesc, knnClassifier, new ArrayList<>(), foldSet);
         }
 
-        // 4b. train and test perceptron classifier (diabetes) with max iterations ranging from 0, 10, 20,..., 100; split fraction = 0.8
-        for (int maxIters = 0; maxIters <= 20; maxIters += 2) {
-            apClassifier.setIterations(maxIters);
-            String expDescription = String.format("4b. Final stats from average perceptron classifier (diabetes, max iteration of %d & 80/20 split over 100 iters.):", maxIters);
-            trainTestClassifierWithTestAccuracy(expDescription, apClassifier, diabetesData, 0.8);
+        System.out.printf("3a-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
+
+        // 3b. Avg. KNN performance on 10-fold cross validation; titanic real valued; K set at 3
+        knnClassifier.setK(3);
+        accuracy = 0.0;
+
+        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
+            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
+            String expDesc = String.format("3b-%d. Final stats from KNN classifier (titanicR, max iters 10, no preprocessor over 100 iters.):", foldIndex);
+            accuracy += trainTestClassifier(expDesc, knnClassifier, new ArrayList<>(), foldSet);
         }
 
-         */
+        System.out.printf("3b-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
     }
 
     /**
      * Trains, tests, and prints out evaluation statistics for a given classifier trained on the
-     * specified data set. Training/testing data randomly split using the splitFraction parameter.
+     * specified data set. Data preprocessors can optionally be provided.
      *
      * @param expDescription
      * @param classifier
-     * @param dataSet
-     * @param splitFraction
+     * @param dataSetSplit
+     * @return a double representing the accuracy of the test
      */
-    public static void trainTestClassifier(
+    public static double trainTestClassifier(
             String expDescription,
             Classifier classifier,
             List<DataPreprocessor> preprocessors,
-            DataSet dataSet,
-            double splitFraction) {
+            DataSetSplit dataSetSplit) {
         // init accuracy stats
         int correctGuesses = 0;
         int totalGuesses = 0;
@@ -212,9 +110,8 @@ public class Experimenter {
         // evaluate trained classifier
         for (int i = 1; i <= 100; i++) {
             // split data
-            DataSetSplit dataSplit = dataSet.split(splitFraction);
-            DataSet trainData = dataSplit.getTrain();
-            DataSet testData = dataSplit.getTest();
+            DataSet trainData = dataSetSplit.getTrain();
+            DataSet testData = dataSetSplit.getTest();
 
             // normalize data with specified preprocessors
             for (DataPreprocessor preprocessor : preprocessors) {
@@ -242,6 +139,9 @@ public class Experimenter {
         // print final stats
         System.out.println(expDescription);
         printStats(correctGuesses, totalGuesses);
+
+        // return final test accuracy
+        return (double)correctGuesses / (double)totalGuesses;
     }
 
     /**
@@ -319,8 +219,8 @@ public class Experimenter {
      * @param totalGuesses
      */
     public static void printStats(int correctGuesses, int totalGuesses) {
-        System.out.printf("-- Correct guesses: %d\n", correctGuesses);
-        System.out.printf("-- Total guesses: %d\n", totalGuesses);
+        // System.out.printf("-- Correct guesses: %d\n", correctGuesses);
+        // System.out.printf("-- Total guesses: %d\n", totalGuesses);
         System.out.printf("-- Accuracy: %f%%\n", (double)correctGuesses / (double)totalGuesses);
         System.out.println("");
     }
