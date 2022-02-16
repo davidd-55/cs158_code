@@ -23,5 +23,7 @@ public interface Classifier {
 	 * @param example
 	 * @return the class label predicted by the classifier for this example
 	 */
-	public double classify(Example example);	
+	public double classify(Example example);
+	
+	public double confidence(Example example);
 }

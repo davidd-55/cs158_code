@@ -1,4 +1,4 @@
-package ml.classifiers;
+package ml.classifiers.old;
 
 import java.util.Map;
 
@@ -8,36 +8,34 @@ import java.util.Map;
  * @author dkauchak
  *
  */
-public class DecisionTreeNode {
+public class DecisionTreeNodeOld {
 	// values associated with going down the left or right branch of the tree,
 	// e.g. if a feature has value 0.0, then you should be traversing down the
 	// left branch.  Try to use these constants since it will make your code
 	// more readable.
 	public static double LEFT_BRANCH = 0.0;
-	//public static double RIGHT_BRANCH = 1.0;
+	public static double RIGHT_BRANCH = 1.0;
 	
 	// whether or not this is a leaf
 	private boolean leaf;
 
 	// only applicable for leaves
-	private double prediction = 0.0;
-	private double confidence = 0.0;
+	private double prediction = 0.0; 
 	
 	// only applicable if it's an internal node
 	private int featureIndex;  // the index of the feature we're checking
 	
-	private DecisionTreeNode left;
-	private DecisionTreeNode right;
+	private DecisionTreeNodeOld left;
+	private DecisionTreeNodeOld right;
 	
 	/**
 	 * Create a leaf node with label "prediction"
 	 * 
 	 * @param prediction the prediction for this leaf node
 	 */
-	public DecisionTreeNode(double prediction, double confidence){
+	public DecisionTreeNodeOld(double prediction){
 		leaf = true;
 		this.prediction = prediction;
-		this.confidence = confidence;
 	}
 	
 	/**
@@ -45,7 +43,7 @@ public class DecisionTreeNode {
 	 * 
 	 * @param featureIndex
 	 */
-	public DecisionTreeNode(int featureIndex){
+	public DecisionTreeNodeOld(int featureIndex){
 		leaf = false;
 		this.featureIndex = featureIndex;
 	}
@@ -71,24 +69,11 @@ public class DecisionTreeNode {
 	}
 	
 	/**
-	 * Only valid if this node is a leaf.
-	 * 
-	 * @return the confidence at this node
-	 */
-	public double confidence(){
-		if( !leaf ){
-			throw new RuntimeException("Can only call prediction on a leaf node");
-		}
-		
-		return confidence;
-	}
-	
-	/**
 	 * Set the left node of this node.
 	 * 
 	 * @param node
 	 */
-	public void setLeft(DecisionTreeNode node){
+	public void setLeft(DecisionTreeNodeOld node){
 		this.left = node;
 	}
 	
@@ -97,7 +82,7 @@ public class DecisionTreeNode {
 	 * 
 	 * @return
 	 */
-	public DecisionTreeNode getLeft(){
+	public DecisionTreeNodeOld getLeft(){
 		return left;
 	}
 	
@@ -106,7 +91,7 @@ public class DecisionTreeNode {
 	 * 
 	 * @param node
 	 */
-	public void setRight(DecisionTreeNode node){
+	public void setRight(DecisionTreeNodeOld node){
 		this.right = node;
 	}
 	
@@ -115,7 +100,7 @@ public class DecisionTreeNode {
 	 * 
 	 * @return
 	 */
-	public DecisionTreeNode getRight(){
+	public DecisionTreeNodeOld getRight(){
 		return right;
 	}
 	

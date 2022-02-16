@@ -110,6 +110,16 @@ public class PerceptronClassifier implements Classifier {
     }
 
     /**
+     * TODO: implement if necessary
+     * @param example
+     * @return
+     */
+    @Override
+    public double confidence(Example example) {
+        return 0;
+    }
+
+    /**
      * Helper method for resetting a perceptron's weights/bias to 0.0
      *
      * @param weightCount amount of weights initialized to 0.0 needed

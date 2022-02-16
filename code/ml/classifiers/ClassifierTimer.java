@@ -1,5 +1,6 @@
 package ml.classifiers;
 
+import ml.classifiers.old.DecisionTreeClassifierOld;
 import ml.data.DataSet;
 import ml.data.DataSetSplit;
 import ml.data.Example;
@@ -57,7 +58,7 @@ public class ClassifierTimer {
 
 		System.out.println("------------------------");
 		System.out.println("Decision Tree:");
-		DecisionTreeClassifier dt = new DecisionTreeClassifier();
+		DecisionTreeClassifierOld dt = new DecisionTreeClassifierOld();
 		timeClassifier(dt, dataset, numRuns);
 
 		System.out.println("------------------------");

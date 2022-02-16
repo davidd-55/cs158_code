@@ -73,6 +73,16 @@ public class KNNClassifier implements Classifier {
     }
 
     /**
+     * TODO: implement if necessary
+     * @param example
+     * @return
+     */
+    @Override
+    public double confidence(Example example) {
+        return 0;
+    }
+
+    /**
      * Sets the K-value for the KNN classifier
      *
      * @param k set K-value for the KNN classifier. Throws an error for
