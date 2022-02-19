@@ -1,20 +1,18 @@
 package ml;
 
 import ml.classifiers.DecisionTreeClassifier;
-import ml.classifiers.KNNClassifier;
 import ml.data.*;
 import ml.classifiers.Classifier;
 import ml.classifiers.AveragePerceptronClassifier;
 import ml.utils.HashMapCounter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
- * A class to run k-NN and Avg. Perceptron classifier experiments
+ * A class to run DT, OVA, and AVA classifier experiments
  *
- * Prepared for CS158 Assignment 04. Authored by David D'Attile
+ * Prepared for CS158 Assignment 05. Authored by David D'Attile
  */
 public class Experimenter {
 
