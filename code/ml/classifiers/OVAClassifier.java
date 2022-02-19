@@ -4,6 +4,7 @@ import ml.data.DataSet;
 import ml.data.Example;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A class to represent an OVA classifier implemented with a ClassifierFactory
@@ -11,8 +12,8 @@ import java.util.HashMap;
  * Prepared for CS158 Assignment 05. Authored by David D'Attile
  */
 public class OVAClassifier implements Classifier{
-    private ClassifierFactory factory;
-    private HashMap<Double, Classifier> labelClassifierMap;
+    private final ClassifierFactory factory;
+    private final Map<Double, Classifier> labelClassifierMap;
 
     /**
      * Initialize the OVA classifier. The classifier relies on the passed
@@ -33,6 +34,9 @@ public class OVAClassifier implements Classifier{
      */
     @Override
     public void train(DataSet data) {
+
+        // clear classifier map if retraining
+        this.labelClassifierMap.clear();
 
         // loop through amount of labels
         for (double currLabel : data.getLabels()) {
@@ -60,8 +64,10 @@ public class OVAClassifier implements Classifier{
     public double classify(Example example) {
 
         // init max confidence and associated label
-        double maxConfidence = Double.MIN_VALUE;
-        double maxConfidenceLabel = Double.NaN;
+        double maxPositiveConfidence = Double.MIN_VALUE;
+        double minNegativeConfidence = Double.MAX_VALUE;
+        double posConfidentLabel = Double.NaN;
+        double negConfidentLabel = Double.NaN;
 
         // loop through binary classifiers and classify
         for (double currLabel : this.labelClassifierMap.keySet()) {
@@ -71,14 +77,22 @@ public class OVAClassifier implements Classifier{
             double currClassification = currClassifier.classify(example);
             double currConfidence = currClassifier.confidence(example);
 
-            // update prediction if we are confident enough
-            if (currConfidence > maxConfidence) {
-                maxConfidence = currConfidence;
-                maxConfidenceLabel = currLabel;
+            // if we make positive classification and are confident, update
+            if (currClassification > 0) {
+                if (currConfidence > maxPositiveConfidence) {
+                    maxPositiveConfidence = currConfidence;
+                    posConfidentLabel = currLabel;
+                }
+            } else { // otherwise, update if least confident negative classification
+                if (currConfidence < minNegativeConfidence) {
+                    minNegativeConfidence = currConfidence;
+                    negConfidentLabel = currLabel;
+                }
             }
         }
 
-        return maxConfidenceLabel;
+        // return positive confident label if we saw a positive example, otherwise negative confident label
+        return maxPositiveConfidence != Double.MIN_VALUE ? posConfidentLabel : negConfidentLabel;
     }
 
     /**
@@ -115,6 +129,7 @@ public class OVAClassifier implements Classifier{
                 binaryExample.setLabel(-1.0);
             }
 
+            // add binary example to binary set
             binaryDataSet.addData(binaryExample);
         }
 

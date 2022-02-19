@@ -31,7 +31,7 @@ public class CrossValidationSet {
 	 * 
 	 * @param dataset
 	 * @param numSplits the number of splits for the data set
-	 * @param ranomize whether or not to randomize the data before creating splits
+	 * @param randomize whether or not to randomize the data before creating splits
 	 */
 	public CrossValidationSet(DataSet dataset, int numSplits, boolean randomize){
 		this.dataset = dataset;

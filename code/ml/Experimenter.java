@@ -1,9 +1,7 @@
 package ml;
 
-import ml.classifiers.DecisionTreeClassifier;
+import ml.classifiers.*;
 import ml.data.*;
-import ml.classifiers.Classifier;
-import ml.classifiers.AveragePerceptronClassifier;
 import ml.utils.HashMapCounter;
 
 import java.util.ArrayList;
@@ -25,9 +23,12 @@ public class Experimenter {
 
         // init binary and real-valued datasets
         DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
+        DataSetSplit wineSplit= wineData.split(0.8);
+        CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
         // init classifiers
         DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
+        /*
 
         // 1. DT training on 100/0 split; wine; depth limit set at 5
         dtClassifier.setDepthLimit(5);
@@ -59,10 +60,34 @@ public class Experimenter {
 
         // 3.DT performance on 80/20 split; wine; depth limit ranging from 0 to 50
         System.out.println("3. DT classifier performance (wine, depth limit 0-50, 80/20 split):");
-        DataSetSplit wineSplit= wineData.split(0.8);
         for (int i = 0; i <= 50; i++) {
             dtClassifier.setDepthLimit(i);
             trainTestClassifierWithTestAccuracy("", true, i, 1, dtClassifier, new ArrayList<>(), wineSplit);
+        }
+        */
+
+        // 4a. OVA performance comparison
+        for (int maxDepth = 1; maxDepth < 4; maxDepth++) {
+            System.out.printf("4a-%d. OVA classifier performance (wine, depth limit 1-3, 10-fold XV):\n", maxDepth);
+            ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, maxDepth);
+            OVAClassifier ovaClassifier = new OVAClassifier(factory);
+            for (int fold = 0; fold < 10; fold++) {
+                DataSetSplit wineFold = wineXV.getValidationSet(fold);
+                trainTestClassifier("", true, fold, 1, ovaClassifier, new ArrayList<>(), wineFold);
+            }
+            System.out.println("");
+        }
+
+        // 4b. AVA performance comparison
+        for (int maxDepth = 1; maxDepth < 4; maxDepth++) {
+            System.out.printf("4b-%d. AVA classifier performance (wine, depth limit 1-3, 10-fold XV):\n", maxDepth);
+            ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, maxDepth);
+            AVAClassifier avaClassifier = new AVAClassifier(factory);
+            for (int fold = 0; fold < 10; fold++) {
+                DataSetSplit wineFold = wineXV.getValidationSet(fold);
+                trainTestClassifier("", true, fold, 1, avaClassifier, new ArrayList<>(), wineFold);
+            }
+            System.out.println("");
         }
     }
 
