@@ -100,7 +100,6 @@ public class PerceptronClassifier implements Classifier {
         // add bias
         classification += this.bias;
 
-        // TODO: check that < is okay
         // return 1 or -1 based on classification sign
         if (classification < 0) {
             return -1.0;
@@ -110,13 +109,23 @@ public class PerceptronClassifier implements Classifier {
     }
 
     /**
-     * TODO: implement if necessary
+     * Yields the confidence in a prediction as that prediction's distance
+     * from the hyperplane used to classify.
+     *
      * @param example
      * @return
      */
     @Override
     public double confidence(Example example) {
-        return 0;
+        // init distance with bias
+        double distance = this.bias;
+
+        // w1f1 + w2f2 + ... + wnfn
+        for (int i = 0; i < this.weights.size(); i++) {
+            distance += this.weights.get(i) * example.getFeature(i);
+        }
+
+        return Math.abs(distance);
     }
 
     /**

@@ -16,7 +16,7 @@ public class Example {
 	// Rather than keeping the name of the feature (i.e. the header information), we'll
 	// index the features starting at 0.  The DataSet class will keep a mapping from
 	// feature index to the actual name.
-	private HashMap<Integer, Double> sparseData = new HashMap<Integer, Double>();
+	private HashMap<Integer, Double> sparseData;
 	private double label;  // the label (assuming it has one)
 	
 	public Example(){
@@ -38,7 +38,7 @@ public class Example {
 	public void addFeature(int featureNum, double value){
 		sparseData.put(featureNum, value);
 	}
-	
+		
 	/**
 	 * Get the value associated with this feature.
 	 * 
@@ -46,7 +46,7 @@ public class Example {
 	 * @return the value for featureNum for this example
 	 */
 	public double getFeature(int featureNum){
-		return sparseData.get(featureNum);
+		return sparseData.containsKey(featureNum) ? sparseData.get(featureNum) : 0.0;
 	}
 	
 	/**
@@ -105,6 +105,20 @@ public class Example {
 		
 		for( int featureIndex: indices){
 			buffer.append(" " + featureIndex + ":" + valueToString(sparseData.get(featureIndex)));
+		}
+		
+		return buffer.toString();
+	}
+	
+	public String toString(HashMap<Integer, String> featureMap){
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(label);
+		
+		ArrayList<Integer> indices = new ArrayList<Integer>(sparseData.keySet());
+		Collections.sort(indices);
+		
+		for( int featureIndex: indices){
+			buffer.append(" " + featureMap.get(featureIndex) + ":" + valueToString(sparseData.get(featureIndex)));
 		}
 		
 		return buffer.toString();

@@ -85,14 +85,4 @@ public class AveragePerceptronClassifier extends PerceptronClassifier implements
 
         this.bias = avgBias / totalCounter;
     }
-
-    /**
-     * TODO: implement if necessary
-     * @param example
-     * @return
-     */
-    @Override
-    public double confidence(Example example) {
-        return 0;
-    }
 }

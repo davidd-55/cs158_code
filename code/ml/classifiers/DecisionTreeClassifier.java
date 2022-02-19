@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import ml.classifiers.old.DecisionTreeNodeOld;
 import ml.data.DataSet;
 import ml.data.Example;
 import ml.utils.HashMapCounter;
@@ -156,7 +155,7 @@ public class DecisionTreeClassifier implements Classifier{
 		for( Example d: data){
 			double value = d.getFeature(featureIndex);
 			
-			if( value == DecisionTreeNodeOld.LEFT_BRANCH ){
+			if( value == DecisionTreeNode.LEFT_BRANCH ){
 				splits[0].add(d);
 			}else{
 				splits[1].add(d);

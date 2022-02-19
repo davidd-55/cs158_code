@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -19,95 +21,79 @@ public class DataSet {
 	private ArrayList<Example> data = new ArrayList<Example>(); // the data/examples in this data set
 	// the mapping from feature indices to the name of the feature
 	private HashMap<Integer, String> featureMap = new HashMap<Integer, String>();
+	private HashSet<Double> labels = new HashSet<Double>();
 	
+	// some constants for different file types
+	public static final int CSVFILE = 0;
+	public static final int TEXTFILE = 1;
+
 	/**
-	 * Creates a new data set from a CSV file.  The file can start with any number
-	 * of "comment" lines which must start with a # sound.  Then the next line must
-	 * be a header (i.e. the features) then all following lines are treated as examples.
+	 * Create a new data set.  
 	 * 
-	 * Assumes the label is the last column.
-	 * 
-	 * @param csvFile comma separated file containing the examples WITH a header
+	 * @param filename the location of the file
+	 * @param fileType what type of file, using the class defined constants (e.g. CSVFILE)
 	 */
-	public DataSet(String csvFile){
-		int numColumns = -1;
-		
-		// figure out how many columns there are then call
-		try {
-			BufferedReader in = new BufferedReader(new FileReader(csvFile));
-			
-			// ignore any lines at the beginning that start with #
-			String line = in.readLine();
-			
-			while( line.startsWith("#")){
-				line = in.readLine();
-			}
-			
-			// parse the headers
-			numColumns = line.split(",").length-1;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		initialize(csvFile, numColumns);
-	}
-	
-	/**
-	 * Creates a new data set from a CSV file.  The file can start with any number
-	 * of "comment" lines which must start with a # sound.  Then the next line must
-	 * be a header (i.e. the features) then all following lines are treated as examples.
-	 * 
-	 * @param csvFile comma separated file containing the examples WITH a header
-	 * @param labelIndex the index (0-based) where the label is at
-	 */
-	public DataSet(String csvFile, int labelIndex){
-		initialize(csvFile, labelIndex);
-	}
-	
-	private void initialize(String csvFile, int labelIndex){
-		try {
-			BufferedReader in = new BufferedReader(new FileReader(csvFile));
-			
-			// ignore any lines at the beginning that start with #
-			String line = in.readLine();
-			
-			while( line.startsWith("#")){
-				line = in.readLine();
-			}
-			
-			// parse the headers
-			String[] headers = line.split(",");
-			
-			int featureIndex = 0;
-			
-			for( int i = 0; i < headers.length; i++ ){
-				if( i != labelIndex ){
-					featureMap.put(featureIndex, headers[i]);
-					featureIndex++;
+	public DataSet(String filename, int fileType){
+		if( fileType == CSVFILE ){
+			int numColumns = -1;
+
+			// figure out how many columns there are then call
+			try {
+				BufferedReader in = new BufferedReader(new FileReader(filename));
+
+				// ignore any lines at the beginning that start with #
+				String line = in.readLine();
+
+				while( line.startsWith("#")){
+					line = in.readLine();
 				}
+				
+				// parse the headers
+				String[] headers = line.split(",");
+				int labelIndex = headers.length-1;					
+				int featureIndex = 0;
+					
+				for( int i = 0; i < headers.length; i++ ){
+					if( i != labelIndex ){
+						featureMap.put(featureIndex, headers[i]);
+						featureIndex++;
+					}
+				}
+					
+				CSVDataReader reader = new CSVDataReader(in, labelIndex);
+				initialize(reader);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			
-			CSVDataReader reader = new CSVDataReader(in, labelIndex);
-			
-			while( reader.hasNext()){
-				Example next = reader.next();				
-				data.add(next);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}else if( fileType == TEXTFILE ){
+			TextDataReader reader = new TextDataReader(filename);
+			initialize(reader);
+			featureMap = reader.getFeatureMap();
 		}
 	}
 	
+	/**
+	 * Read all of the data from the reader and populate this dataset.
+	 * 
+	 * @param reader
+	 */
+	private void initialize(Iterator<Example> reader){			
+		while( reader.hasNext()){
+			Example next = reader.next();				
+			data.add(next);
+			labels.add(next.getLabel());
+		}
+	}
+		
 	/**
 	 * Constructs a new empty dataset (i.e. no examples) with the features
 	 * specified in the featuremap
 	 * 
-	 * @param featureMap
+	 * @param s
 	 */
 	public DataSet(HashMap<Integer, String> featureMap){
-		this.featureMap = (HashMap<Integer,String>)featureMap.clone();
+		this.featureMap = new HashMap<Integer, String>(featureMap);
 	}
 	
 	/**
@@ -141,6 +127,7 @@ public class DataSet {
 	public void addData(ArrayList<Example> addMe){
 		for( Example e: addMe ){
 			data.add(e);
+			labels.add(e.getLabel());
 		}
 	}
 
@@ -151,10 +138,11 @@ public class DataSet {
 	 * have the same features that the data set was already initialized
 	 * with.
 	 * 
-	 * @param e
+	 * @param addMe
 	 */
 	public void addData(Example e){
 		data.add(e);
+		labels.add(e.getLabel());
 	}
 	
 	/**
@@ -165,6 +153,15 @@ public class DataSet {
 	 */
 	public Set<Integer> getAllFeatureIndices(){
 		return featureMap.keySet();
+	}
+	
+	/**
+	 * Get all the labels in this data set
+	 * 
+	 * @return the labels
+	 */
+	public Set<Double> getLabels(){
+		return labels;
 	}
 	
 	/**

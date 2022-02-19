@@ -1,11 +1,14 @@
 package ml;
 
+import ml.classifiers.DecisionTreeClassifier;
 import ml.classifiers.KNNClassifier;
 import ml.data.*;
 import ml.classifiers.Classifier;
 import ml.classifiers.AveragePerceptronClassifier;
+import ml.utils.HashMapCounter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -23,155 +26,76 @@ public class Experimenter {
     public static void main(String[] args) {
 
         // init binary and real-valued datasets
-        DataSet titanicB = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv");
-        DataSet titanicR = getData("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv");
-
-        // init 10-fold cross validations
-        CrossValidationSet cvSetBinary = new CrossValidationSet(titanicB, 10);
-        CrossValidationSet cvSetReal = new CrossValidationSet(titanicR, 10);
-
-        // init feature processors & lists
-        ExampleNormalizer exampleNormalizer = new ExampleNormalizer();
-        FeatureNormalizer featureNormalizer = new FeatureNormalizer();
-        ArrayList<DataPreprocessor> exOnly = new ArrayList<>(){{add(exampleNormalizer);}};
-        ArrayList<DataPreprocessor> featOnly = new ArrayList<>(){{add(featureNormalizer);}};
-        ArrayList<DataPreprocessor> both = new ArrayList<>(){{add(exampleNormalizer);add(featureNormalizer);}};
+        DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
 
         // init classifiers
-        AveragePerceptronClassifier apClassifier = new AveragePerceptronClassifier();
-        KNNClassifier knnClassifier = new KNNClassifier();
+        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
 
-        // 1. Avg. Perceptron performance on 10-fold cross validation; titanic binary; max iterations set at 10
-        double accuracy = 0.0;
+        // 1. DT training on 100/0 split; wine; depth limit set at 5
+        dtClassifier.setDepthLimit(5);
+        dtClassifier.train(wineData);
+        System.out.print("1. Train DT classifier (wine, depth limit 5, 100/0 split):\n");
+        System.out.println(dtClassifier);
 
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetBinary.getValidationSet(foldIndex, true);
-            String expDesc = String.format("1-%d. Final stats from AP classifier (titanicB, max iters 10, no preprocessor over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, apClassifier, new ArrayList<>(), foldSet);
+        // 2. find majority class in wine set
+        HashMapCounter<Double> labelMap = new HashMapCounter<>();
+        for (Example e : wineData.getData()) {
+            labelMap.increment(e.getLabel());
         }
 
-        System.out.printf("1-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 2. Avg. Perceptron performance on 10-fold cross validation; titanic real valued; max iterations set at 10
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("2-%d. Final stats from AP classifier (titanicR, max iters 10, no preprocessor over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, apClassifier, new ArrayList<>(), foldSet);
+        double maxLabel = Double.MIN_VALUE;
+        int maxValue = Integer.MIN_VALUE;
+        for (double currLabel : labelMap.keySet()) {
+            int currValue = labelMap.get(currLabel);
+            if (currValue > maxValue) {
+                maxLabel = currLabel;
+                maxValue = currValue;
+            }
         }
 
-        System.out.printf("2-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
+        System.out.print("\n2. Find majority label:\n");
+        System.out.printf("-- majority label: %f; num. occurrences: %d; percent of dataset: %f\n\n",
+                maxLabel,
+                maxValue,
+                (double)maxValue / (double)wineData.getData().size());
 
-        // 3a. KNN performance on 10-fold cross validation; titanic binary; K set at 3
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetBinary.getValidationSet(foldIndex, true);
-            String expDesc = String.format("3a-%d. Final stats from KNN classifier (titanicB, max iters 10, no preprocessor over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, knnClassifier, new ArrayList<>(), foldSet);
+        // 3.DT performance on 80/20 split; wine; depth limit ranging from 0 to 50
+        System.out.println("3. DT classifier performance (wine, depth limit 0-50, 80/20 split):");
+        DataSetSplit wineSplit= wineData.split(0.8);
+        for (int i = 0; i <= 50; i++) {
+            dtClassifier.setDepthLimit(i);
+            trainTestClassifierWithTestAccuracy("", true, i, 1, dtClassifier, new ArrayList<>(), wineSplit);
         }
-
-        System.out.printf("3a-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 3b. KNN performance on 10-fold cross validation; titanic real valued; K set at 3
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("3b-%d. Final stats from KNN classifier (titanicR, max iters 10, no preprocessor over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, knnClassifier, new ArrayList<>(), foldSet);
-        }
-
-        System.out.printf("3b-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4a. Avg. Perceptron performance on 10-fold cross validation; ex. normalization; titanic real valued; max iters set at 10
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4a-%d. Final stats from AP classifier (titanicR, max iters 10, ex. normalization over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, apClassifier, exOnly, foldSet);
-        }
-
-        System.out.printf("4a-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4b. Avg. Perceptron performance on 10-fold cross validation; feature normalization; titanic real valued; max iters set at 10
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4b-%d. Final stats from AP classifier (titanicR, max iters 10, feature normalization over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, apClassifier, featOnly, foldSet);
-        }
-
-        System.out.printf("4b-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4c. Avg. Perceptron performance on 10-fold cross validation; both normalizations; titanic real valued; max iters set at 10
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4c-%d. Final stats from AP classifier (titanicR, max iters 10, both normalizations over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, apClassifier, both, foldSet);
-        }
-
-        System.out.printf("4c-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4d. KNN performance on 10-fold cross validation; ex. normalization; titanic real valued; K set at 3
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4d-%d. Final stats from KNN classifier (titanicR, K set at 3, ex. normalization over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, knnClassifier, exOnly, foldSet);
-        }
-
-        System.out.printf("4d-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4e. KNN performance on 10-fold cross validation; feature normalization; titanic real valued; K set at 3
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4e-%d. Final stats from KNN classifier (titanicR, K set at 3, feature normalization over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, knnClassifier, featOnly, foldSet);
-        }
-
-        System.out.printf("4e-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
-
-        // 4f. KNN performance on 10-fold cross validation; both normalizations; titanic real valued; K set at 3
-        accuracy = 0.0;
-
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = cvSetReal.getValidationSet(foldIndex, true);
-            String expDesc = String.format("4f-%d. Final stats from KNN classifier (titanicR, K set at 3, both normalizations over 100 iters.):", foldIndex);
-            accuracy += trainTestClassifier(expDesc, knnClassifier, both, foldSet);
-        }
-
-        System.out.printf("4f-10 Final average accuracy: %f%%\n\n", accuracy / 10.0);
     }
 
     /**
      * Trains, tests, and prints out evaluation statistics for a given classifier trained on the
      * specified data set. Data preprocessors can optionally be provided.
      *
-     * @param expDescription
-     * @param classifier
-     * @param dataSetSplit
+     * @param expDescription experiment description to be printed at each iteration
+     * @param csvFriendly whether to print csv-friendly stats
+     * @param currIteration provided for printing stats
+     * @param iterationCount number of iterations to average performance over
+     * @param classifier which classifier to use
+     * @param preprocessors a list of preprocessors in order of their intended use
+     * @param dataSetSplit the data set to use
      * @return a double representing the accuracy of the test
      */
     public static double trainTestClassifier(
             String expDescription,
+            boolean csvFriendly,
+            int currIteration,
+            int iterationCount,
             Classifier classifier,
             List<DataPreprocessor> preprocessors,
             DataSetSplit dataSetSplit) {
+
         // init accuracy stats
         int correctGuesses = 0;
         int totalGuesses = 0;
 
         // evaluate trained classifier
-        for (int i = 1; i <= 100; i++) {
+        for (int i = 1; i <= iterationCount; i++) {
             // split data
             DataSet trainData = dataSetSplit.getTrain();
             DataSet testData = dataSetSplit.getTest();
@@ -200,20 +124,105 @@ public class Experimenter {
         }
 
         // print final stats
-        System.out.println(expDescription);
-        printStats(correctGuesses, totalGuesses);
+        if (expDescription != null && !expDescription.isEmpty()) {
+            System.out.println(expDescription);
+        }
+
+        if (csvFriendly) {
+            printCSVFriendlyStats(currIteration, correctGuesses, totalGuesses);
+        } else {
+            printStats(correctGuesses, totalGuesses);
+        }
 
         // return final test accuracy
         return (double)correctGuesses / (double)totalGuesses;
     }
 
     /**
-     * Helper for parsing a data set.
+     * Same as trainTestClassifier but incorporates stats from evaluating training data against the model.
      *
-     * @return
+     * @param expDescription experiment description to be printed at each iteration
+     * @param csvFriendly whether to print csv-friendly stats
+     * @param currIteration provided for printing stats
+     * @param iterationCount number of iterations to average performance over
+     * @param classifier which classifier to use
+     * @param preprocessors a list of preprocessors in order of their intended use
+     * @param dataSetSplit the data set to use
      */
-    public static DataSet getData(String fpath){
-        return new DataSet(fpath);
+    public static void trainTestClassifierWithTestAccuracy(
+            String expDescription,
+            boolean csvFriendly,
+            int currIteration,
+            int iterationCount,
+            Classifier classifier,
+            List<DataPreprocessor> preprocessors,
+            DataSetSplit dataSetSplit) {
+
+        // init accuracy stats
+        int correctTrainGuesses = 0;
+        int totalTrainGuesses = 0;
+        int correctTestGuesses = 0;
+        int totalTestGuesses = 0;
+
+        // evaluate trained classifier
+        for (int i = 1; i <= iterationCount; i++) {
+            // split data
+            DataSet trainData = dataSetSplit.getTrain();
+            DataSet testData = dataSetSplit.getTest();
+
+            // normalize data with specified preprocessors
+            for (DataPreprocessor preprocessor : preprocessors) {
+                preprocessor.preprocessTrain(trainData);
+                preprocessor.preprocessTest(testData);
+            }
+
+            // train classifier
+            classifier.train(trainData);
+
+            // evaluate model accuracy over training data
+            for (Example trainEx : trainData.getData()) {
+                // classify
+                double classification = classifier.classify(trainEx);
+
+                // if correct, add to correct training guesses
+                if (classification == trainEx.getLabel()){
+                    correctTrainGuesses++;
+                }
+
+                // increment total training guesses
+                totalTrainGuesses++;
+            }
+
+            // evaluate model accuracy over testing data
+            for (Example testEx : testData.getData()) {
+                // classify
+                double classification = classifier.classify(testEx);
+
+                // if correct, add to correct testing guesses
+                if (classification == testEx.getLabel()){
+                    correctTestGuesses++;
+                }
+
+                // increment total testing guesses
+                totalTestGuesses++;
+            }
+        }
+
+        // print final stats
+        if (expDescription != null && !expDescription.isEmpty()) {
+            System.out.println(expDescription);
+        }
+
+        if (csvFriendly) {
+            printCSVFriendlyStatsWithTrainAndTestAccuracy(
+                    currIteration,
+                    correctTrainGuesses, totalTrainGuesses,
+                    correctTestGuesses, totalTestGuesses);
+        } else {
+            printStatsWithTrainTestAccuracy(
+                    correctTrainGuesses, totalTrainGuesses,
+                    correctTestGuesses, totalTestGuesses);
+        }
     }
 
     /**
@@ -227,6 +236,18 @@ public class Experimenter {
         System.out.printf("-- Total guesses: %d\n", totalGuesses);
         System.out.printf("-- Accuracy: %f%%\n", (double)correctGuesses / (double)totalGuesses);
         System.out.println("");
+    }
+
+    /**
+     * Helper for printing model evaluation stats in a CSV-friendly way.
+     *
+     * @param iteration
+     * @param correctGuesses
+     * @param totalGuesses
+     */
+    public static void printCSVFriendlyStats(int iteration, int correctGuesses, int totalGuesses) {
+        double accuracy = (double) correctGuesses / (double) totalGuesses;
+        System.out.printf("%d, %f\n", iteration, accuracy);
     }
 
     /**
@@ -249,5 +270,26 @@ public class Experimenter {
         System.out.printf("-- Total testing data guesses: %d\n", totalTestGuesses);
         System.out.printf("-- Testing data accuracy: %f%%\n", (double)correctTestGuesses / (double)totalTestGuesses);
         System.out.println("");
+    }
+
+    /**
+     * Helper for printing model evaluation stats in a CSV-friendly way (training and testing stats).
+     * Formatted iteration, trainAccuracy, testAccuracy
+     *
+     * @param iteration
+     * @param correctTrainGuesses
+     * @param totalTrainGuesses
+     * @param correctTestGuesses
+     * @param totalTestGuesses
+     */
+    public static void printCSVFriendlyStatsWithTrainAndTestAccuracy(
+            int iteration,
+            int correctTrainGuesses,
+            int totalTrainGuesses,
+            int correctTestGuesses,
+            int totalTestGuesses) {
+        double trainAccuracy = (double) correctTrainGuesses / (double) totalTrainGuesses;
+        double testAccuracy = (double) correctTestGuesses / (double) totalTestGuesses;
+        System.out.printf("%d, %f, %f\n", iteration, trainAccuracy, testAccuracy);
     }
 }

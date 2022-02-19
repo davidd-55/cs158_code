@@ -31,7 +31,7 @@ public class CrossValidationSet {
 	 * 
 	 * @param dataset
 	 * @param numSplits the number of splits for the data set
-	 * @param randomize whether or not to randomize the data before creating splits
+	 * @param ranomize whether or not to randomize the data before creating splits
 	 */
 	public CrossValidationSet(DataSet dataset, int numSplits, boolean randomize){
 		this.dataset = dataset;
@@ -49,18 +49,13 @@ public class CrossValidationSet {
 	}
 	
 	/**
-	 * Retrieve a split from the data set.  Splits start
-	 * at 0.  The split can either be a new copy of the data or
-	 * a shared version.  The shared version is more memory efficient, but
-	 * can cause confusion/problems if you mutate the examples.  The new copy
-	 * avoids this, but is more memory intensive.
+	 * Which split number to retrieve.  Splits start
+	 * at 0.
 	 * 
 	 * @param splitNum the split number requested
-	 * @param copyData whether to copy the underlying data or use a shared referent
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public DataSetSplit getValidationSet(int splitNum, boolean copyData){
+	public DataSetSplit getValidationSet(int splitNum){
 		if( splitNum >= numSplits || splitNum < 0){
 			return null;
 		}else{
@@ -82,13 +77,11 @@ public class CrossValidationSet {
 			DataSet test = new DataSet(dataset.getFeatureMap());
 			
 			for( int i = 0; i < data.size(); i++ ){
-				Example current = copyData ? new Example(data.get(i)) : data.get(i);
-				
 				// check if we're in the test range
 				if( i >= begin && i < end ){
-					test.addData(current);					
+					test.addData(data.get(i));
 				}else{
-					train.addData(current);
+					train.addData(data.get(i));
 				}
 			}
 			
