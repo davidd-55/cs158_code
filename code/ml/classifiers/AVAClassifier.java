@@ -3,7 +3,6 @@ package ml.classifiers;
 import ml.data.DataSet;
 import ml.data.Example;
 
-import java.awt.geom.Arc2D;
 import java.util.*;
 
 /**
