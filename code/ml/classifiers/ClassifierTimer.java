@@ -51,24 +51,31 @@ public class ClassifierTimer {
 	}
 	
 	public static void main(String[] args){
-		String csvFile = "/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv";
-		DataSet dataset = new DataSet(csvFile, DataSet.CSVFILE);
+		String csvFile = "/Users/daviddattile/Dev/cs158_code/data/wines.train";
+		DataSet dataset = new DataSet(csvFile, DataSet.TEXTFILE);
+		ClassifierFactory dtFactory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, 3);
+		ClassifierFactory avgPerceptronFactory = new ClassifierFactory(ClassifierFactory.PERCEPTRON, 10);
 
-		int numRuns = 10;
-
-		System.out.println("------------------------");
-		System.out.println("Decision Tree:");
-		DecisionTreeClassifierOld dt = new DecisionTreeClassifierOld();
-		timeClassifier(dt, dataset, numRuns);
+		int numRuns = 3;
 
 		System.out.println("------------------------");
-		System.out.println("Perceptron:");
-		PerceptronClassifier original = new PerceptronClassifier();
-		timeClassifier(original, dataset, numRuns);
-		
+		System.out.println("OVA w/DT-3:");
+		OVAClassifier ova = new OVAClassifier(dtFactory);
+		timeClassifier(ova, dataset, numRuns);
+
 		System.out.println("------------------------");
-		System.out.println("Average Perceptron:");
-		AveragePerceptronClassifier weighted = new AveragePerceptronClassifier();
-		timeClassifier(weighted, dataset, numRuns);
+		System.out.println("AVA w/DT-3:");
+		AVAClassifier ava = new AVAClassifier(dtFactory);
+		timeClassifier(ava, dataset, numRuns);
+
+		System.out.println("------------------------");
+		System.out.println("OVA w/Avg. Perceptron-10:");
+		OVAClassifier ovaPerc = new OVAClassifier(avgPerceptronFactory);
+		timeClassifier(ovaPerc, dataset, numRuns);
+
+		System.out.println("------------------------");
+		System.out.println("AVA w/Avg Perceptron-10:");
+		AVAClassifier avaPerc = new AVAClassifier(avgPerceptronFactory);
+		timeClassifier(avaPerc, dataset, numRuns);
 	}
 }

@@ -1,88 +1,74 @@
 package ml.classifiers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Set;
+
 import ml.data.DataSet;
 import ml.data.Example;
-import java.util.*;
 
 /**
- * A class to represent an average perceptron classifier.
- * This class extends the regular perceptron class and only modifies the 'train' method.
+ * Average perceptron classifier.  We'll utilize most of the code from the
+ * PerceptronClassifier class and only need to rewrite the train method.
+ * 
+ * @author dkauchak
  *
- * Prepared for CS158 Assignment 03. Authored by David D'Attile
  */
-public class AveragePerceptronClassifier extends PerceptronClassifier implements Classifier {
-    /**
-     * Train this classifier based on the data set. If training data set is empty,
-     * examples will be classified with label '0.0'.
-     *
-     * @param dataSet training data
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void train(DataSet dataSet) {
-        // reset weights and bias to zero
-        this.reset(dataSet.getAllFeatureIndices().size());
+public class AveragePerceptronClassifier extends PerceptronClassifier {
+	
+	public void train(DataSet data) {
+		initializeWeights(data.getAllFeatureIndices());
+		
+		ArrayList<Example> training = (ArrayList<Example>)data.getData().clone();
 
-        // get weight counts
-        int weightCount = this.weights.size();
+		int total = 0;
+		int lastUpdate = 1;
+		
+		// initialize the weights
+		HashMap<Integer, Double> sumWeights = getZeroWeights(weights.keySet());
+		double sumB = 0;
+		
+		for( int it = 0; it < iterations; it++ ){
+			Collections.shuffle(training);
+			
+			for( Example e: training ){
+				if( getPrediction(e) != e.getLabel() ){
+					double label = e.getLabel();
 
-        // isolate and clone data for training
-        ArrayList<Example> clonedData = (ArrayList<Example>)dataSet.getData().clone();
+					// update the weights
+					for( Integer featureIndex: weights.keySet() ){
+						double featureValue = e.getFeature(featureIndex);
+						double oldSumWeight = sumWeights.get(featureIndex);
+						double oldWeight = weights.get(featureIndex);
 
-        // initialize updated and totalCount
-        int updated = 0;
-        int totalCounter = 0;
+						// update the aggregate weights
+						sumWeights.put(featureIndex, oldSumWeight + lastUpdate*oldWeight);
 
-        // initialize average weights/bias
-        double avgBias = 0.0;
-        ArrayList<Double> avgWeights = new ArrayList<>(this.weights);
+						
+						// update the basic weights
+						weights.put(featureIndex, oldWeight + featureValue*label);						
+					}
 
-        // train for maxIterations iterations
-        for (int i = 0; i < maxIterations; i++) {
-
-            // shuffle training data
-            Collections.shuffle(clonedData, new Random(System.nanoTime()));
-
-            // loop through shuffled data for training
-            for (Example e : clonedData) {
-
-                // update if prediction based on current model is wrong
-                if (classify(e) * e.getLabel() <= 0) {
-
-                    // update our final, weighted, avg weights
-                    for (int j = 0; j < weightCount; j++) {
-                        double updatedAvgWeight = avgWeights.get(j) + (updated * this.weights.get(j));
-                        avgWeights.set(j, updatedAvgWeight);
-                    }
-
-                    // update avg bias
-                    avgBias += updated * this.bias;
-
-                    // update all weights with wi = wi + (fi * label)
-                    for (int k = 0; k < weightCount; k++) {
-                        double updatedWeight = this.weights.get(k) + (e.getFeature(k) * e.getLabel());
-                        this.weights.set(k, updatedWeight);
-                    }
-
-                    // update bias with actual label
-                    this.bias += e.getLabel();
-
-                    // reset updated
-                    updated = 0;
-                }
-
-                // update updated and total counter regardless of model update
-                updated += 1;
-                totalCounter += 1;
-            }
-        }
-
-        // reset weights/bias instance vars with averaged versions
-        for (int i = 0; i < weightCount; i++) {
-            double avgWeight = avgWeights.get(i) / totalCounter;
-            this.weights.set(i, avgWeight);
-        }
-
-        this.bias = avgBias / totalCounter;
-    }
+					// update sumB
+					sumB += lastUpdate*b;
+					
+					// update b
+					b += label;
+					
+					lastUpdate = 0;
+				}
+				
+				total++;
+				lastUpdate++;
+			}
+		}
+		
+		// normalize the weights and save back into the weights vector
+		for( Integer featureIndex: sumWeights.keySet() ){
+			weights.put(featureIndex, sumWeights.get(featureIndex)/total);
+		}
+		
+		b = sumB/total;
+	}
 }

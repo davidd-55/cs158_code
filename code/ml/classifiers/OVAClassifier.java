@@ -50,6 +50,7 @@ public class OVAClassifier implements Classifier{
             // train classifier on binary data
             currClassifier.train(binaryLabelSet);
 
+            // put label --> classifier in map
             labelClassifierMap.put(currLabel, currClassifier);
         }
     }

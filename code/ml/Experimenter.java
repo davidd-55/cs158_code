@@ -26,11 +26,8 @@ public class Experimenter {
         DataSetSplit wineSplit= wineData.split(0.8);
         CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
-        // init classifiers
-        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
-        /*
-
         // 1. DT training on 100/0 split; wine; depth limit set at 5
+        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
         dtClassifier.setDepthLimit(5);
         dtClassifier.train(wineData);
         System.out.print("1. Train DT classifier (wine, depth limit 5, 100/0 split):\n");
@@ -60,11 +57,12 @@ public class Experimenter {
 
         // 3.DT performance on 80/20 split; wine; depth limit ranging from 0 to 50
         System.out.println("3. DT classifier performance (wine, depth limit 0-50, 80/20 split):");
+        dtClassifier = new DecisionTreeClassifier();
         for (int i = 0; i <= 50; i++) {
             dtClassifier.setDepthLimit(i);
             trainTestClassifierWithTestAccuracy("", true, i, 1, dtClassifier, new ArrayList<>(), wineSplit);
         }
-        */
+        System.out.println();
 
         // 4a. OVA performance comparison
         for (int maxDepth = 1; maxDepth < 4; maxDepth++) {
@@ -75,7 +73,7 @@ public class Experimenter {
                 DataSetSplit wineFold = wineXV.getValidationSet(fold);
                 trainTestClassifier("", true, fold, 1, ovaClassifier, new ArrayList<>(), wineFold);
             }
-            System.out.println("");
+            System.out.println();
         }
 
         // 4b. AVA performance comparison
@@ -87,8 +85,24 @@ public class Experimenter {
                 DataSetSplit wineFold = wineXV.getValidationSet(fold);
                 trainTestClassifier("", true, fold, 1, avaClassifier, new ArrayList<>(), wineFold);
             }
-            System.out.println("");
+            System.out.println();
         }
+
+        // 4c. DT performance comparison
+        System.out.println("4c. DT classifier performance (wine, depth limit 3, 10-fold XV):");
+        dtClassifier.setDepthLimit(3);
+        for (int fold = 0; fold < 10; fold++) {
+            DataSetSplit wineFold = wineXV.getValidationSet(fold);
+            trainTestClassifier("", true, fold, 1, dtClassifier, new ArrayList<>(), wineFold);
+        }
+        System.out.println();
+
+
+        // 7. OVA-DT training on 100/0 split; wine; depth limit set at 3
+        ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, 3);
+        OVAClassifier ovaClassifier = new OVAClassifier(factory);
+        ovaClassifier.train(wineData);
+        System.out.print("7. Train OVA-DT classifier (wine, depth limit 3, 100/0 split):\n");
     }
 
     /**

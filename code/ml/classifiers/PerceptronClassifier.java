@@ -1,189 +1,153 @@
 package ml.classifiers;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.Random;
+
 import ml.data.DataSet;
 import ml.data.Example;
-import java.util.*;
 
 /**
- * A class to represent a perceptron classifier
+ * Basic perceptron classifier
+ * 
+ * @author dkauchak
  *
- * Prepared for CS158 Assignment 03. Authored by David D'Attile
  */
 public class PerceptronClassifier implements Classifier {
-    protected Integer maxIterations;
-    protected Double bias;
-    protected ArrayList<Double> weights;
+	protected HashMap<Integer, Double> weights; // the feature weights
+	protected double b = 0; // the intersect weight
+	
+	protected int iterations = 10;
+		
+	/**
+	 * Get a weight vector over the set of features with each weight
+	 * set to 0
+	 * 
+	 * @param features the set of features to learn over
+	 * @return
+	 */
+	protected HashMap<Integer, Double> getZeroWeights(Set<Integer> features){
+		HashMap<Integer, Double> temp = new HashMap<Integer, Double>();
+		
+		for( Integer f: features){
+			temp.put(f, 0.0);
+		}
+		
+		return temp;
+	}
+	
+	/**
+	 * Initialize the weights and the intersect value
+	 * 
+	 * @param features
+	 */
+	protected void initializeWeights(Set<Integer> features){
+		weights = getZeroWeights(features);
+		b = 0;
+	}
+	
+	/**
+	 * Set the number of iterations the perceptron should run during training
+	 * 
+	 * @param iterations
+	 */
+	public void setIterations(int iterations){
+		this.iterations = iterations;
+	}
+	
+	public void train(DataSet data) {
+		initializeWeights(data.getAllFeatureIndices());
+		
+		ArrayList<Example> training = (ArrayList<Example>)data.getData().clone();
+		
+		for( int it = 0; it < iterations; it++ ){
+			Collections.shuffle(training);
+			
+			for( Example e: training ){
+				if( getPrediction(e) != e.getLabel() ){
+					double label = e.getLabel();
+					
+					// update the weights
+					//for( Integer featureIndex: weights.keySet() ){
+					for( Integer featureIndex: e.getFeatureSet() ){
+						double oldWeight = weights.get(featureIndex);
+						double featureValue = e.getFeature(featureIndex);
+						
+						weights.put(featureIndex, oldWeight + featureValue*label);
+					}
+					
+					// update b
+					b += label;					
+				}
+			}
+		}
+	}
 
-    /**
-     * Initialize the perceptron classifier. At initialization, the perceptron
-     * defaults to a prediction of '0.0', has a max iterations value of 10,
-     * and has no default dataSet.
-     */
-    public PerceptronClassifier() {
-        this.maxIterations = 10;
-        this.bias = 0.0;
-        this.weights = new ArrayList<>();
-    }
+	@Override
+	public double classify(Example example) {
+		return getPrediction(example);
+	}
+	
+	@Override
+	public double confidence(Example example) {
+		return Math.abs(getDistanceFromHyperplane(example, weights, b));
+	}
 
-    /**
-     * Train this classifier based on the data set. If training data set is empty,
-     * examples will be classified with label '0.0'.
-     *
-     * @param dataSet training data
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public void train(DataSet dataSet) {
-        // reset weights and bias to zero
-        this.reset(dataSet.getAllFeatureIndices().size());
+		
+	/**
+	 * Get the prediction from the current set of weights on this example
+	 * 
+	 * @param e the example to predict
+	 * @return
+	 */
+	protected double getPrediction(Example e){
+		return getPrediction(e, weights, b);
+	}
+	
+	/**
+	 * Get the prediction from the on this example from using weights w and inputB
+	 * 
+	 * @param e example to predict
+	 * @param w the set of weights to use
+	 * @param inputB the b value to use
+	 * @return the prediction
+	 */
+	protected static double getPrediction(Example e, HashMap<Integer, Double> w, double inputB){
+		double sum = getDistanceFromHyperplane(e,w,inputB);
 
-        // isolate and clone data for training
-        ArrayList<Example> clonedData = (ArrayList<Example>)dataSet.getData().clone();
-
-        // get weight counts
-        int weightCount = this.weights.size();
-
-        // train for maxIterations iterations
-        for (int i = 0; i < maxIterations; i++) {
-
-            // shuffle training data
-            Collections.shuffle(clonedData, new Random(System.nanoTime()));
-
-            // loop through shuffled data for training
-            for (Example e : clonedData) {
-
-                // update if prediction based on current model is wrong
-                if (classify(e) * e.getLabel() <= 0) {
-
-                    // update all weights with wi = wi + (fi * label)
-                    for (int j = 0; j < weightCount; j++) {
-                        double updatedWeight = this.weights.get(j) + (e.getFeature(j) * e.getLabel());
-                        this.weights.set(j, updatedWeight);
-                    }
-
-                    // update bias with actual label
-                    this.bias += e.getLabel();
-                }
-            }
-        }
-    }
-
-    /**
-     * Classify the example.  Should only be called *after* train has been called.
-     *
-     * @param example an example from a test data set
-     * @return the class label predicted by the classifier for this example (1 or -1)
-     */
-    @Override
-    public double classify(Example example) {
-        // get number of weights
-        int weightCount = this.weights.size();
-
-        // check for weights count == feature count
-        if (weightCount != example.getFeatureSet().size()) {
-            String msg = String.format(
-                    "expected example feature count to match model. example feature count: %d model feature count: %d",
-                    example.getFeatureSet().size(),
-                    weightCount);
-
-            throw new IllegalArgumentException(msg);
-        }
-
-        // init classification
-        double classification = 0.0;
-
-        // w1f1 + w2f2 + ... + wnfn
-        for (int i = 0; i < weightCount; i++) {
-            classification += this.weights.get(i) * example.getFeature(i);
-        }
-
-        // add bias
-        classification += this.bias;
-
-        // return 1 or -1 based on classification sign
-        if (classification < 0) {
-            return -1.0;
-        } else {
-            return 1.0;
-        }
-    }
-
-    /**
-     * Yields the confidence in a prediction as that prediction's distance
-     * from the hyperplane used to classify.
-     *
-     * @param example
-     * @return
-     */
-    @Override
-    public double confidence(Example example) {
-        // init distance with bias
-        double distance = this.bias;
-
-        // w1f1 + w2f2 + ... + wnfn
-        for (int i = 0; i < this.weights.size(); i++) {
-            distance += this.weights.get(i) * example.getFeature(i);
-        }
-
-        return Math.abs(distance);
-    }
-
-    /**
-     * Helper method for resetting a perceptron's weights/bias to 0.0
-     *
-     * @param weightCount amount of weights initialized to 0.0 needed
-     */
-    protected void reset(Integer weightCount) {
-        // reset bias to zero
-        this.bias = 0.0;
-
-        // reset weights to zero
-        this.weights.clear();
-
-        for (int i = 0; i < weightCount; i++) {
-            this.weights.add(0.0);
-        }
-    }
-
-    /**
-     * Sets the maximum number of training iterations for the perceptron classifier
-     *
-     * @param iterations iterations to set for the perceptron classifier;
-     *                   throws InvalidArgumentException for arguments less than zero
-     */
-    public void setIterations(int iterations) {
-        // throw error for supplied iterations < 0
-        if (iterations < 0) {
-            String msg = String.format("expected a positive 'iterations' value, received: %d", iterations);
-            throw new IllegalArgumentException(msg);
-        }
-
-        this.maxIterations = iterations;
-    }
-
-    /**
-     * Generates a string representation of the perceptron weights and bias
-     * in the format '0:weight_0 1:weight_1 2:weight2 ... n:weight_n b-value'
-     *
-     * @return the string representation of the perceptron
-     */
-    public String toString() {
-        // if weights haven't been set or are empty, return empty string
-        if (this.weights.isEmpty()) {
-            return "";
-        }
-
-        // init StringBuilder
-        StringBuilder s = new StringBuilder();
-
-        // add weights to string
-        for (int i = 0; i < this.weights.size(); i++) {
-            s.append(String.format("%d:%f ", i, this.weights.get(i)));
-        }
-
-        // add bias
-        s.append(String.format("%f", this.bias));
-
-        return s.toString();
-    }
+		if( sum > 0 ){
+			return 1.0;
+		}else if( sum < 0 ){
+			return -1.0;
+		}else{
+			return 0;
+		}
+	}
+	
+	protected static double getDistanceFromHyperplane(Example e, HashMap<Integer, Double> w, double inputB){
+		double sum = inputB;
+		
+		//for(Integer featureIndex: w.keySet()){
+		// only need to iterate over non-zero features
+		for( Integer featureIndex: e.getFeatureSet()){
+			sum += w.get(featureIndex) * e.getFeature(featureIndex);
+		}
+		
+		return sum;
+	}
+	
+	public String toString(){
+		StringBuffer buffer = new StringBuffer();
+		
+		ArrayList<Integer> temp = new ArrayList<Integer>(weights.keySet());
+		Collections.sort(temp);
+		
+		for(Integer index: temp){
+			buffer.append(index + ":" + weights.get(index) + " ");
+		}
+		
+		return buffer.substring(0, buffer.length()-1);
+	}
 }
