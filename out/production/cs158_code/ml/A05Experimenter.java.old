@@ -22,21 +22,87 @@ public class Experimenter {
     public static void main(String[] args) {
 
         // init binary and real-valued datasets
-        DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
-        DataSetSplit titanicSplit= titanicData.split(0.8);
+        DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
+        DataSetSplit wineSplit= wineData.split(0.8);
+        CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
-        // 3. GD train/test with hinge loss/no reg. on 80/20 split; binary titanic; eta/lambda = 0.01
-        GradientDescentClassifier gdClassifier = new GradientDescentClassifier();
-        gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
-        gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
-        String exp3Desc = "3. Train GD classifier with hinge loss/no reg. (80/20 split; binary titanic; eta/lambda = 0.01):";
-        trainTestClassifier(exp3Desc, false, 1, 1, gdClassifier, new ArrayList<>(), titanicSplit);
+        // 1. DT training on 100/0 split; wine; depth limit set at 5
+        DecisionTreeClassifier dtClassifier = new DecisionTreeClassifier();
+        dtClassifier.setDepthLimit(5);
+        dtClassifier.train(wineData);
+        System.out.print("1. Train DT classifier (wine, depth limit 5, 100/0 split):\n");
+        System.out.println(dtClassifier);
 
-        // 4. GD train/test with hinge loss/L2 reg. on 80/20 split; binary titanic; eta/lambda = 0.01
-        gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
-        gdClassifier.setRegularization(GradientDescentClassifier.L2_REGULARIZATION);
-        String exp4Desc = "4. Train GD classifier with hinge loss/L2 reg. (80/20 split; binary titanic; eta/lambda = 0.01):";
-        trainTestClassifier(exp4Desc, false, 1, 1, gdClassifier, new ArrayList<>(), titanicSplit);
+        // 2. find majority class in wine set
+        HashMapCounter<Double> labelMap = new HashMapCounter<>();
+        for (Example e : wineData.getData()) {
+            labelMap.increment(e.getLabel());
+        }
+
+        double maxLabel = Double.MIN_VALUE;
+        int maxValue = Integer.MIN_VALUE;
+        for (double currLabel : labelMap.keySet()) {
+            int currValue = labelMap.get(currLabel);
+            if (currValue > maxValue) {
+                maxLabel = currLabel;
+                maxValue = currValue;
+            }
+        }
+
+        System.out.print("\n2. Find majority label:\n");
+        System.out.printf("-- majority label: %f; num. occurrences: %d; percent of dataset: %f\n\n",
+                maxLabel,
+                maxValue,
+                (double)maxValue / (double)wineData.getData().size());
+
+        // 3.DT performance on 80/20 split; wine; depth limit ranging from 0 to 50
+        System.out.println("3. DT classifier performance (wine, depth limit 0-50, 80/20 split):");
+        dtClassifier = new DecisionTreeClassifier();
+        for (int i = 0; i <= 50; i++) {
+            dtClassifier.setDepthLimit(i);
+            trainTestClassifierWithTestAccuracy("", true, i, 1, dtClassifier, new ArrayList<>(), wineSplit);
+        }
+        System.out.println();
+
+        // 4a. OVA performance comparison
+        for (int maxDepth = 1; maxDepth < 4; maxDepth++) {
+            System.out.printf("4a-%d. OVA classifier performance (wine, depth limit 1-3, 10-fold XV):\n", maxDepth);
+            ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, maxDepth);
+            OVAClassifier ovaClassifier = new OVAClassifier(factory);
+            for (int fold = 0; fold < 10; fold++) {
+                DataSetSplit wineFold = wineXV.getValidationSet(fold);
+                trainTestClassifier("", true, fold, 1, ovaClassifier, new ArrayList<>(), wineFold);
+            }
+            System.out.println();
+        }
+
+        // 4b. AVA performance comparison
+        for (int maxDepth = 1; maxDepth < 4; maxDepth++) {
+            System.out.printf("4b-%d. AVA classifier performance (wine, depth limit 1-3, 10-fold XV):\n", maxDepth);
+            ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, maxDepth);
+            AVAClassifier avaClassifier = new AVAClassifier(factory);
+            for (int fold = 0; fold < 10; fold++) {
+                DataSetSplit wineFold = wineXV.getValidationSet(fold);
+                trainTestClassifier("", true, fold, 1, avaClassifier, new ArrayList<>(), wineFold);
+            }
+            System.out.println();
+        }
+
+        // 4c. DT performance comparison
+        System.out.println("4c. DT classifier performance (wine, depth limit 3, 10-fold XV):");
+        dtClassifier.setDepthLimit(3);
+        for (int fold = 0; fold < 10; fold++) {
+            DataSetSplit wineFold = wineXV.getValidationSet(fold);
+            trainTestClassifier("", true, fold, 1, dtClassifier, new ArrayList<>(), wineFold);
+        }
+        System.out.println();
+
+
+        // 7. OVA-DT training on 100/0 split; wine; depth limit set at 3
+        ClassifierFactory factory = new ClassifierFactory(ClassifierFactory.DECISION_TREE, 3);
+        OVAClassifier ovaClassifier = new OVAClassifier(factory);
+        ovaClassifier.train(wineData);
+        System.out.print("7. Train OVA-DT classifier (wine, depth limit 3, 100/0 split):\n");
     }
 
     /**

@@ -63,8 +63,9 @@ public class GradientDescentClassifier implements Classifier {
 
 		ArrayList<Example> training = (ArrayList<Example>)data.getData().clone();
 
-		for( int it = 0; it < iterations; it++ ){
+		for( int it = 0; it < this.iterations; it++ ){
 			Collections.shuffle(training);
+			double lossSum = 0.0; // for writeup questions 3 and 4
 
 			for( Example e: training ){
 				double label = e.getLabel(); // y
@@ -74,21 +75,29 @@ public class GradientDescentClassifier implements Classifier {
 				for( Integer featureIndex: e.getFeatureSet() ){
 
 					// get grad desc
-					double oldWeight = weights.get(featureIndex); // wj
+					double oldWeight = this.weights.get(featureIndex); // wj
 					double featureValue = e.getFeature(featureIndex); // xij
 					double prediction = getPrediction(e); // y'
 					double c = calculateLoss(label, prediction); // loss(label, prediction)
 					double r = calculateRegularization(oldWeight); // regularization(oldWeight)
 
+					// update weights
 					// wj = wj + eta ((yi * xij * c) - (lambda * r))
 					double newWeight = oldWeight + this.eta * ((featureValue * label * c) - (this.lambda * r));
-
 					weights.put(featureIndex, newWeight);
-				}
 
-				// TODO: figure out how to update b
-				b += label;
+					// update bias on a per-weight basis
+					// b = wj + eta ((yi * 1 * c) - (lambda * r))
+					// TODO: should it use exact equation with old weight?
+					b += oldWeight + this.eta * ((label * c) - (this.lambda * r));
+
+					// for writeup questions 3 and 4
+					// TODO should this be happening on a per-feature or per-example basis?
+					lossSum += c;
+				}
 			}
+
+			printLoss(lossSum, it);
 		}
 	}
 
@@ -316,6 +325,36 @@ public class GradientDescentClassifier implements Classifier {
 		}
 
 		return temp;
+	}
+
+	/**
+	 * A helper fxn for printing out a supplied loss value alongside
+	 * the current classifier's set hyperparameters
+	 *
+	 * @param lossVal
+	 */
+	private void printLoss(double lossVal, int iteration) {
+		String hyperParamString;
+
+		if (this.eta == HINGE_LOSS) {
+			if (this.lambda == NO_REGULARIZATION) {
+				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/no regularization): %f", iteration, lossVal);
+			} else if (this.lambda == L1_REGULARIZATION) {
+				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/L1 regularization): %f", iteration, lossVal);
+			} else {
+				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/L2 regularization): %f", iteration, lossVal);
+			}
+		} else {
+			if (this.lambda == NO_REGULARIZATION) {
+				hyperParamString = String.format("exp loss for iteration %d (hinge loss/no regularization): %f", iteration, lossVal);
+			} else if (this.lambda == L1_REGULARIZATION) {
+				hyperParamString = String.format("exp loss for iteration %d (hinge loss/L1 regularization): %f", iteration, lossVal);
+			} else {
+				hyperParamString = String.format("exp loss for iteration %d (hinge loss/L2 regularization): %f", iteration, lossVal);
+			}
+		}
+
+		System.out.println(hyperParamString);
 	}
 	
 	public String toString(){
