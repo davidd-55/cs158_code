@@ -30,12 +30,12 @@ public class GradientDescentClassifier implements Classifier {
 	private int loss;
 	private int regularization;
 	private double lambda;
-	private double learningRate;
+	private double eta; // aka learning rate
 	
-	protected HashMap<Integer, Double> weights; // the feature weights
-	protected double b = 0; // the intersect weight
+	private HashMap<Integer, Double> weights; // the feature weights
+	private double b; // the intersect weight
 	
-	protected int iterations = 10;
+	protected int iterations;
 
 	/**
 	 * Initialize the Gradient Descent classifier. At initialization, the classifier
@@ -45,103 +45,88 @@ public class GradientDescentClassifier implements Classifier {
 		this.loss = EXPONENTIAL_LOSS;
 		this.regularization = NO_REGULARIZATION;
 		this.lambda = 0.01;
-		this.learningRate = 0.01;
+		this.eta = 0.01;
+		this.weights = new HashMap<>();
+		this.b = 0;
+		this.iterations = 10;
 	}
-		
+
 	/**
-	 * Get a weight vector over the set of features with each weight
-	 * set to 0
-	 * 
-	 * @param features the set of features to learn over
-	 * @return
+	 * Train this classifier based on the data set
+	 *
+	 * @param data
 	 */
-	protected HashMap<Integer, Double> getZeroWeights(Set<Integer> features){
-		HashMap<Integer, Double> temp = new HashMap<Integer, Double>();
-		
-		for( Integer f: features){
-			temp.put(f, 0.0);
-		}
-		
-		return temp;
-	}
-	
-	/**
-	 * Initialize the weights and the intersect value
-	 * 
-	 * @param features
-	 */
-	protected void initializeWeights(Set<Integer> features){
-		weights = getZeroWeights(features);
-		b = 0;
-	}
-	
-	/**
-	 * Set the number of iterations the perceptron should run during training
-	 * 
-	 * @param iterations
-	 */
-	public void setIterations(int iterations){
-		this.iterations = iterations;
-	}
-	
+	@Override
+	@SuppressWarnings("unchecked")
 	public void train(DataSet data) {
 		initializeWeights(data.getAllFeatureIndices());
-		
+
 		ArrayList<Example> training = (ArrayList<Example>)data.getData().clone();
-		
+
 		for( int it = 0; it < iterations; it++ ){
 			Collections.shuffle(training);
-			
+
 			for( Example e: training ){
-				if( getPrediction(e) != e.getLabel() ){
-					double label = e.getLabel();
-					
-					// update the weights
-					//for( Integer featureIndex: weights.keySet() ){
-					for( Integer featureIndex: e.getFeatureSet() ){
-						double oldWeight = weights.get(featureIndex);
-						double featureValue = e.getFeature(featureIndex);
-						
-						weights.put(featureIndex, oldWeight + featureValue*label);
-					}
-					
-					// update b
-					b += label;					
+				double label = e.getLabel(); // y
+
+				// update the weights
+				//for( Integer featureIndex: weights.keySet() ){
+				for( Integer featureIndex: e.getFeatureSet() ){
+
+					// get grad desc
+					double oldWeight = weights.get(featureIndex); // wj
+					double featureValue = e.getFeature(featureIndex); // xij
+					double prediction = getPrediction(e); // y'
+					double c = calculateLoss(label, prediction); // loss(label, prediction)
+					double r = calculateRegularization(oldWeight); // regularization(oldWeight)
+
+					// wj = wj + eta ((yi * xij * c) - (lambda * r))
+					double newWeight = oldWeight + this.eta * ((featureValue * label * c) - (this.lambda * r));
+
+					weights.put(featureIndex, newWeight);
 				}
+
+				// TODO: figure out how to update b
+				b += label;
 			}
 		}
 	}
 
+	/**
+	 * Classify the example.  Should only be called *after* train has been called.
+	 *
+	 * @param example
+	 * @return the class label predicted by the classifier for this example
+	 */
 	@Override
 	public double classify(Example example) {
-		return getPrediction(example);
+		return getPrediction(example, this.weights, this.b);
 	}
 	
 	@Override
 	public double confidence(Example example) {
-		return Math.abs(getDistanceFromHyperplane(example, weights, b));
+		return Math.abs(getDistanceFromHyperplane(example, this.weights, this.b));
 	}
 
-		
 	/**
 	 * Get the prediction from the current set of weights on this example
-	 * 
+	 *
 	 * @param e the example to predict
 	 * @return
 	 */
-	protected double getPrediction(Example e){
-		return getPrediction(e, weights, b);
+	private double getPrediction(Example e){
+		return getPrediction(e, this.weights, this.b);
 	}
-	
+
 	/**
 	 * Get the prediction from the on this example from using weights w and inputB
-	 * 
+	 *
 	 * @param e example to predict
 	 * @param w the set of weights to use
 	 * @param inputB the b value to use
 	 * @return the prediction
 	 */
-	protected static double getPrediction(Example e, HashMap<Integer, Double> w, double inputB){
+	private static double getPrediction(Example e, HashMap<Integer, Double> w, double inputB){
 		double sum = getDistanceFromHyperplane(e,w,inputB);
 
 		if( sum > 0 ){
@@ -152,8 +137,149 @@ public class GradientDescentClassifier implements Classifier {
 			return 0;
 		}
 	}
-	
-	protected static double getDistanceFromHyperplane(Example e, HashMap<Integer, Double> w, double inputB){
+
+	/**
+	 * Set the loss fxn gradient descent should use based on constants
+	 *
+	 * @param loss
+	 */
+	public void setLoss(int loss){
+		switch (loss) {
+			case EXPONENTIAL_LOSS -> this.loss = EXPONENTIAL_LOSS;
+			case HINGE_LOSS -> this.loss = HINGE_LOSS;
+			default -> {
+				String msg = String.format("expected valid loss specification, received %d", loss);
+				throw new IllegalArgumentException(msg);
+			}
+		}
+	}
+
+	/**
+	 * Set the regularization fxn gradient descent should use based on constants
+	 *
+	 * @param regularization
+	 */
+	public void setRegularization(int regularization){
+		switch (regularization) {
+			case NO_REGULARIZATION -> this.regularization = NO_REGULARIZATION;
+			case L1_REGULARIZATION -> this.regularization = L1_REGULARIZATION;
+			case L2_REGULARIZATION -> this.regularization = L2_REGULARIZATION;
+			default -> {
+				String msg = String.format("expected valid regularization specification, received %d", regularization);
+				throw new IllegalArgumentException(msg);
+			}
+		}
+	}
+
+	/**
+	 * Set the eta (learning rate) gradient descent should use
+	 *
+	 * @param eta
+	 */
+	public void setEta(double eta){
+		this.eta = eta;
+	}
+
+	/**
+	 * Set the lambda gradient descent should use
+	 *
+	 * @param lambda
+	 */
+	public void setLambda(double lambda){
+		this.lambda = lambda;
+	}
+
+	/**
+	 * Set the iterations gradient descent should use during training
+	 *
+	 * @param iterations
+	 */
+	public void setIterations(int iterations){
+		this.iterations = iterations;
+	}
+
+	/**
+	 * Calculate the loss based on the classifier's specified loss fxn
+	 *
+	 * @param label
+	 * @param prediction
+	 * @return a double representing the loss calculation
+	 */
+	private double calculateLoss(double label, double prediction) {
+		return calculateLoss(label, prediction, this.loss);
+	}
+
+	/**
+	 * A helper for calculating loss from a label, prediction, and loss fxn
+	 *
+	 * @param label
+	 * @param prediction
+	 * @param loss
+	 * @return a double representing the specified loss calculation
+	 */
+	private static double calculateLoss(double label, double prediction, int loss) {
+
+		// init loss calculation
+		double lossCalc;
+
+		// calc based on loss fxn
+		switch (loss) {
+			case HINGE_LOSS -> lossCalc = Math.max(0, 1 - (label * prediction));
+			case EXPONENTIAL_LOSS -> lossCalc = Math.exp(-(label * prediction));
+			default -> {
+				String msg = String.format("expected valid loss specification for calculation, received %d", loss);
+				throw new IllegalArgumentException(msg);
+			}
+		}
+
+		return lossCalc;
+	}
+
+	/**
+	 * Calculate the regularization based on the classifier's specified regularization fxn
+	 *
+	 * @param weight
+	 * @return a double representing the regularization calculation
+	 */
+	private double calculateRegularization(double weight) {
+		return calculateRegularization(weight, this.regularization);
+	}
+
+	/**
+	 * A helper for calculating loss from a weight and regularization fxn
+	 *
+	 * @param weight
+	 * @param regularization
+	 * @return a double representing the specified loss calculation
+	 */
+	private static double calculateRegularization(double weight, int regularization) {
+
+		// init regularization calculation
+		double regCalc;
+
+		// calc based on regularization fxn
+		switch (regularization) {
+			case NO_REGULARIZATION -> regCalc = 0;
+			case L1_REGULARIZATION -> regCalc = weight >= 0 ? 1.0 : -1.0;
+			case L2_REGULARIZATION -> regCalc = weight;
+			default -> {
+				String msg = String.format("expected valid regularization specification for calculation, received %d", regularization);
+				throw new IllegalArgumentException(msg);
+			}
+		}
+
+		return regCalc;
+	}
+
+	/**
+	 * A helper function for determining an example's distance from the hyperplane
+	 *
+	 * @param e
+	 * @param w
+	 * @param inputB
+	 * @return a double representing the distance from the hyperplane
+	 */
+	private static double getDistanceFromHyperplane(Example e, HashMap<Integer, Double> w, double inputB){
 		double sum = inputB;
 		
 		//for(Integer featureIndex: w.keySet()){
@@ -163,6 +289,33 @@ public class GradientDescentClassifier implements Classifier {
 		}
 		
 		return sum;
+	}
+
+	/**
+	 * Initialize the weights and the intersect value
+	 *
+	 * @param features
+	 */
+	protected void initializeWeights(Set<Integer> features){
+		weights = getZeroWeights(features);
+		b = 0;
+	}
+
+	/**
+	 * Get a weight vector over the set of features with each weight
+	 * set to 0
+	 *
+	 * @param features the set of features to learn over
+	 * @return
+	 */
+	protected HashMap<Integer, Double> getZeroWeights(Set<Integer> features){
+		HashMap<Integer, Double> temp = new HashMap<Integer, Double>();
+
+		for( Integer f: features){
+			temp.put(f, 0.0);
+		}
+
+		return temp;
 	}
 	
 	public String toString(){
