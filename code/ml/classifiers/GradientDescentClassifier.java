@@ -69,6 +69,8 @@ public class GradientDescentClassifier implements Classifier {
 
 			for( Example e: training ){
 				double label = e.getLabel(); // y
+				double prediction = getPrediction(e); // y'
+				double c = calculateLoss(label, prediction); // loss(label, prediction)
 
 				// update the weights
 				//for( Integer featureIndex: weights.keySet() ){
@@ -77,8 +79,6 @@ public class GradientDescentClassifier implements Classifier {
 					// get grad desc
 					double oldWeight = this.weights.get(featureIndex); // wj
 					double featureValue = e.getFeature(featureIndex); // xij
-					double prediction = getPrediction(e); // y'
-					double c = calculateLoss(label, prediction); // loss(label, prediction)
 					double r = calculateRegularization(oldWeight); // regularization(oldWeight)
 
 					// update weights
@@ -86,15 +86,17 @@ public class GradientDescentClassifier implements Classifier {
 					double newWeight = oldWeight + this.eta * ((featureValue * label * c) - (this.lambda * r));
 					weights.put(featureIndex, newWeight);
 
-					// update bias on a per-weight basis
-					// b = wj + eta ((yi * 1 * c) - (lambda * r))
-					// TODO: should it use exact equation with old weight?
-					b += oldWeight + this.eta * ((label * c) - (this.lambda * r));
-
 					// for writeup questions 3 and 4
 					// TODO should this be happening on a per-feature or per-example basis?
 					lossSum += c;
 				}
+
+				// regularization(oldWeight)
+				double rBias = calculateRegularization(this.b);
+
+				// update bias on a per-example basis
+				// b = b + eta ((yi * 1 * c) - (lambda * r))
+				this.b += this.eta * ((label * c) - (this.lambda * rBias));
 			}
 
 			printLoss(lossSum, it);
