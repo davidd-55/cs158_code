@@ -99,7 +99,7 @@ public class GradientDescentClassifier implements Classifier {
 				this.b += this.eta * ((label * c) - (this.lambda * rBias));
 			}
 
-			printLoss(lossSum, it);
+			// printLoss(lossSum, it);
 		}
 	}
 
