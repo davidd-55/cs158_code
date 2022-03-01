@@ -1,10 +1,6 @@
 package ml.classifiers;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.Random;
+import java.util.*;
 
 import ml.data.DataSet;
 import ml.data.Example;
@@ -85,10 +81,6 @@ public class GradientDescentClassifier implements Classifier {
 					// wj = wj + eta ((yi * xij * c) - (lambda * r))
 					double newWeight = oldWeight + this.eta * ((featureValue * label * c) - (this.lambda * r));
 					weights.put(featureIndex, newWeight);
-
-					// for writeup questions 3 and 4
-					// TODO should this be happening on a per-feature or per-example basis?
-					lossSum += c;
 				}
 
 				// regularization(oldWeight)
@@ -97,9 +89,13 @@ public class GradientDescentClassifier implements Classifier {
 				// update bias on a per-example basis
 				// b = b + eta ((yi * 1 * c) - (lambda * r))
 				this.b += this.eta * ((label * c) - (this.lambda * rBias));
+
+				// update loss for printing
+				lossSum += getLoss(label, prediction);
 			}
 
-			// printLoss(lossSum, it);
+			// print loss summation per iteration
+			printLoss(lossSum, it);
 		}
 	}
 
@@ -283,6 +279,34 @@ public class GradientDescentClassifier implements Classifier {
 	}
 
 	/**
+	 * A helper function for getting the loss of our classifier from a label and prediction.
+	 *
+	 * @param label
+	 * @param prediction
+	 * @return a double representing the loss
+	 */
+	private double getLoss(double label, double prediction) {
+		// loss = loss(y,y') + lambda/2 * ||w||^2
+		return calculateLoss(label, prediction) + ((this.lambda / 2.0) * Math.pow(calculateNorm(this.weights.values()), 2));
+	}
+
+	/**
+	 * A helper function for calculating the norm of a vector.
+	 *
+	 * @param vector
+	 * @return A double representing the norm of a vector.
+	 */
+	private static double calculateNorm(Collection<Double> vector) {
+		double normSum = 0.0;
+
+		for (double d : vector) {
+			normSum += Math.pow(d, 2);
+		}
+
+		return Math.sqrt(normSum);
+	}
+
+	/**
 	 * A helper function for determining an example's distance from the hyperplane
 	 *
 	 * @param e
@@ -338,18 +362,18 @@ public class GradientDescentClassifier implements Classifier {
 	private void printLoss(double lossVal, int iteration) {
 		String hyperParamString;
 
-		if (this.eta == HINGE_LOSS) {
-			if (this.lambda == NO_REGULARIZATION) {
+		if (this.loss == HINGE_LOSS) {
+			if (this.regularization == NO_REGULARIZATION) {
 				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/no regularization): %f", iteration, lossVal);
-			} else if (this.lambda == L1_REGULARIZATION) {
+			} else if (this.regularization == L1_REGULARIZATION) {
 				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/L1 regularization): %f", iteration, lossVal);
 			} else {
 				hyperParamString = String.format("aggregate loss for iteration %d (hinge loss/L2 regularization): %f", iteration, lossVal);
 			}
 		} else {
-			if (this.lambda == NO_REGULARIZATION) {
+			if (this.regularization == NO_REGULARIZATION) {
 				hyperParamString = String.format("exp loss for iteration %d (hinge loss/no regularization): %f", iteration, lossVal);
-			} else if (this.lambda == L1_REGULARIZATION) {
+			} else if (this.regularization == L1_REGULARIZATION) {
 				hyperParamString = String.format("exp loss for iteration %d (hinge loss/L1 regularization): %f", iteration, lossVal);
 			} else {
 				hyperParamString = String.format("exp loss for iteration %d (hinge loss/L2 regularization): %f", iteration, lossVal);

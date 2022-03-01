@@ -25,10 +25,14 @@ public class Experimenter {
         // init binary and real-valued datasets
         DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.real.csv", DataSet.CSVFILE);
         DataSetSplit titanicSplit= titanicData.split(0.8);
+        CrossValidationSet titanicXV = titanicData.getRandomCrossValidationSet(10);
+
         ArrayList<DataPreprocessor> normalizers = new ArrayList<>(){{add(new ExampleNormalizer()); add(new FeatureNormalizer());}};
 
-        // 3. GD train/test with hinge loss/no reg. on 80/20 split; real titanic; eta/lambda = 0.01
+        // init classifier
         GradientDescentClassifier gdClassifier = new GradientDescentClassifier();
+
+        // 3. GD train/test with hinge loss/no reg. on 80/20 split; real titanic; eta/lambda = 0.01
         gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
         gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
         String exp3Desc = "3. Train GD classifier with hinge loss/no reg. (80/20 split; real titanic; eta/lambda = 0.01):";
@@ -40,11 +44,13 @@ public class Experimenter {
         String exp4Desc = "4. Train GD classifier with hinge loss/L2 reg. (80/20 split; real titanic; eta/lambda = 0.01):";
         trainTestClassifier(exp4Desc, true, false, 1, 1, gdClassifier, normalizers, titanicSplit);
 
-        // 5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; real titanic; eta/lambda 0.01 - 1.00
-        System.out.println("5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; real titanic; eta/lambda 0.01 - 1.00");
+        /*
+        // 5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; real titanic; eta/lambda 0.001 - 1.00
+        System.out.println("5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; real titanic; eta/lambda 0.001 - 1.00");
         System.out.println("expValue,eta,lambda,both");
-        int iteration = 1;
-        double testVal = 0.01;
+        gdClassifier.setLoss(GradientDescentClassifier.EXPONENTIAL_LOSS);
+        gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
+        double testVal = 0.001;
         while (testVal <= 1.0) {
 
             // increase eta
@@ -52,29 +58,74 @@ public class Experimenter {
             gdClassifier.setLambda(0.01);
             double etaAccuracy = trainTestClassifier(
                     "", false, false, 0, 100,
-                    gdClassifier, normalizers,titanicSplit);
+                    gdClassifier, normalizers, titanicSplit);
 
             // increase lambda
-            gdClassifier.setEta(0.01);
+            gdClassifier.setEta(0.001);
             gdClassifier.setLambda(testVal);
             double lambdaAccuracy = trainTestClassifier(
                     "", false, false, 0, 100,
-                    gdClassifier, normalizers,titanicSplit);
+                    gdClassifier, normalizers, titanicSplit);
 
             // both!
             gdClassifier.setEta(testVal);
             gdClassifier.setLambda(testVal);
             double bothAccuracy = trainTestClassifier(
                     "", false, false, 0, 100,
-                    gdClassifier, normalizers,titanicSplit);
+                    gdClassifier, normalizers, titanicSplit);
 
-            System.out.printf("%d,%f,%f,%f\n", iteration, etaAccuracy, lambdaAccuracy, bothAccuracy);
+            System.out.printf("%f,%f,%f,%f\n", testVal, etaAccuracy, lambdaAccuracy, bothAccuracy);
 
-            iteration += 1;
-            testVal += 0.01;
+            testVal += 0.001;
         }
 
-        // 5b. use best found values in tandem!
+        // 5b. use best found values in tandem! do XV experiments and ttest
+        System.out.println("5b. GD train/test baseline and ideal values; 10-fold XV; real titanic");
+        System.out.println("fold,base,bestEta,bestLambda,bestBothEqual,bestBothCombo");
+        gdClassifier.setLoss(GradientDescentClassifier.EXPONENTIAL_LOSS);
+        gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
+        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
+            DataSetSplit foldSet = titanicXV.getValidationSet(foldIndex);
+
+            // base accuracy
+            gdClassifier.setEta(0.01);
+            gdClassifier.setLambda(0.01);
+            double baseAccuracy = trainTestClassifier(
+                    "", false, false, 0, 1,
+                    gdClassifier, normalizers, foldSet);
+
+            // best eta accuracy
+            gdClassifier.setEta(0.71);
+            gdClassifier.setLambda(0.01);
+            double bestEtaAccuracy = trainTestClassifier(
+                    "", false, false, 0, 1,
+                    gdClassifier, normalizers, foldSet);
+
+            // best lambda accuracy
+            gdClassifier.setEta(0.01);
+            gdClassifier.setLambda(0.629);
+            double bestLambdaAccuracy = trainTestClassifier(
+                    "", false, false, 0, 1,
+                    gdClassifier, normalizers, foldSet);
+
+            // best eta = lambda accuracy
+            gdClassifier.setEta(0.581);
+            gdClassifier.setLambda(0.581);
+            double bestBothEqualAccuracy = trainTestClassifier(
+                    "", false, false, 0, 1,
+                    gdClassifier, normalizers, foldSet);
+
+            // best eta and lambda combined accuracy
+            gdClassifier.setEta(0.71);
+            gdClassifier.setLambda(0.629);
+            double bestBothComboAccuracy = trainTestClassifier(
+                    "", false, false, 0, 1,
+                    gdClassifier, normalizers, foldSet);
+
+            System.out.printf("%d,%f,%f,%f,%f,%f\n", foldIndex, baseAccuracy, bestEtaAccuracy, bestLambdaAccuracy, bestBothEqualAccuracy, bestBothComboAccuracy);
+        }
+
+         */
     }
 
     /**
