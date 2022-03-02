@@ -16,11 +16,13 @@ public class GradientDescentClassifier implements Classifier {
 	// constants for the different surrogate loss functions
 	public static final int EXPONENTIAL_LOSS = 0;
 	public static final int HINGE_LOSS = 1;
+	public static final int SQUARED_LOSS = 2;
 	
 	// constants for the different regularization parameters
 	public static final int NO_REGULARIZATION = 0;
 	public static final int L1_REGULARIZATION = 1;
 	public static final int L2_REGULARIZATION = 2;
+	public static final int L3_REGULARIZATION = 3;
 
 	// hyperparameters
 	private int loss;
@@ -63,10 +65,13 @@ public class GradientDescentClassifier implements Classifier {
 			Collections.shuffle(training);
 			double lossSum = 0.0; // for writeup questions 3 and 4
 
-			for( Example e: training ){
+			for( Example e: training ) {
 				double label = e.getLabel(); // y
-				double prediction = getPrediction(e); // y'
+				double prediction = getDistanceFromHyperplane(e, this.weights, this.b); // y'
 				double c = calculateLoss(label, prediction); // loss(label, prediction)
+
+				// update loss for printing
+				lossSum += getLoss(label, prediction); // uncomment for reg calculation
 
 				// update the weights
 				//for( Integer featureIndex: weights.keySet() ){
@@ -83,19 +88,20 @@ public class GradientDescentClassifier implements Classifier {
 					weights.put(featureIndex, newWeight);
 				}
 
-				// regularization(oldWeight)
+				// regularization(bias)
 				double rBias = calculateRegularization(this.b);
 
 				// update bias on a per-example basis
 				// b = b + eta ((yi * 1 * c) - (lambda * r))
 				this.b += this.eta * ((label * c) - (this.lambda * rBias));
 
-				// update loss for printing
-				lossSum += getLoss(label, prediction);
+				// print weights for questions 1 and 2
+				// System.out.printf("GD classifier weights for example %d at iteration %d\n", training.indexOf(e), it);
+				// System.out.println(this + "\n");
 			}
 
-			// print loss summation per iteration
-			printLoss(lossSum, it);
+			// print loss summation per iteration for questions 3 and 4
+			// printLoss(lossSum, it); // uncomment for loss printed at each iteration
 		}
 	}
 
@@ -154,6 +160,7 @@ public class GradientDescentClassifier implements Classifier {
 		switch (loss) {
 			case EXPONENTIAL_LOSS -> this.loss = EXPONENTIAL_LOSS;
 			case HINGE_LOSS -> this.loss = HINGE_LOSS;
+			case SQUARED_LOSS -> this.loss = SQUARED_LOSS;
 			default -> {
 				String msg = String.format("expected valid loss specification, received %d", loss);
 				throw new IllegalArgumentException(msg);
@@ -171,6 +178,7 @@ public class GradientDescentClassifier implements Classifier {
 			case NO_REGULARIZATION -> this.regularization = NO_REGULARIZATION;
 			case L1_REGULARIZATION -> this.regularization = L1_REGULARIZATION;
 			case L2_REGULARIZATION -> this.regularization = L2_REGULARIZATION;
+			case L3_REGULARIZATION -> this.regularization = L3_REGULARIZATION;
 			default -> {
 				String msg = String.format("expected valid regularization specification, received %d", regularization);
 				throw new IllegalArgumentException(msg);
@@ -233,6 +241,7 @@ public class GradientDescentClassifier implements Classifier {
 		switch (loss) {
 			case HINGE_LOSS -> lossCalc = Math.max(0, 1 - (label * prediction));
 			case EXPONENTIAL_LOSS -> lossCalc = Math.exp(-(label * prediction));
+			case SQUARED_LOSS -> lossCalc = Math.pow(label - prediction, 2);
 			default -> {
 				String msg = String.format("expected valid loss specification for calculation, received %d", loss);
 				throw new IllegalArgumentException(msg);
@@ -269,6 +278,7 @@ public class GradientDescentClassifier implements Classifier {
 			case NO_REGULARIZATION -> regCalc = 0;
 			case L1_REGULARIZATION -> regCalc = weight >= 0 ? 1.0 : -1.0;
 			case L2_REGULARIZATION -> regCalc = weight;
+			case L3_REGULARIZATION -> regCalc = Math.pow(weight, 2);
 			default -> {
 				String msg = String.format("expected valid regularization specification for calculation, received %d", regularization);
 				throw new IllegalArgumentException(msg);
@@ -286,24 +296,36 @@ public class GradientDescentClassifier implements Classifier {
 	 * @return a double representing the loss
 	 */
 	private double getLoss(double label, double prediction) {
+
+		double loss = calculateLoss(label, prediction);
+
+		// loss = loss(y,y') + lambda * ||w||^
+		if (this.regularization == L1_REGULARIZATION) {
+			loss += this.lambda * calculatePNorm(this.weights.values(), 1);
+		}
+
 		// loss = loss(y,y') + lambda/2 * ||w||^2
-		return calculateLoss(label, prediction) + ((this.lambda / 2.0) * Math.pow(calculateNorm(this.weights.values()), 2));
+		if (this.regularization == L2_REGULARIZATION) {
+			loss += (this.lambda / 2.0) * calculatePNorm(this.weights.values(), 2);
+		}
+
+		return loss;
 	}
 
 	/**
-	 * A helper function for calculating the norm of a vector.
+	 * A helper function for calculating the p norm of a vector.
 	 *
 	 * @param vector
 	 * @return A double representing the norm of a vector.
 	 */
-	private static double calculateNorm(Collection<Double> vector) {
+	private static double calculatePNorm(Collection<Double> vector, double p) {
 		double normSum = 0.0;
 
 		for (double d : vector) {
-			normSum += Math.pow(d, 2);
+			normSum += Math.pow(d, p);
 		}
 
-		return Math.sqrt(normSum);
+		return Math.pow(normSum, 1.0 / p);
 	}
 
 	/**
@@ -392,6 +414,8 @@ public class GradientDescentClassifier implements Classifier {
 		for(Integer index: temp){
 			buffer.append(index + ":" + weights.get(index) + " ");
 		}
+
+		buffer.append("b:" + this.b + " ");
 		
 		return buffer.substring(0, buffer.length()-1);
 	}
