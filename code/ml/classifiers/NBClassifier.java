@@ -26,7 +26,7 @@ public class NBClassifier implements Classifier {
      * initializes lambda as BLANK and by default uses all features.
      */
     public NBClassifier() {
-        this.lambda = 0;
+        this.lambda = 0.01;
         this.useOnlyPositiveFeatures = false;
         this.exampleCount = 0;
         this.labelOccurrences = new HashMapCounter<>();
@@ -76,14 +76,18 @@ public class NBClassifier implements Classifier {
 
     /**
      * Calculates the log probability of the most likely label (i.e. the
-     * label chosen for that example).
+     * label predicted for that example).
      *
      * @param example
      * @return A double representing the probability of the most likely label
      */
     @Override
     public double confidence(Example example) {
-        return 0;
+        // get prediction
+        double prediction = classify(example);
+
+        // calculate log prob
+        return getLogProb(example, prediction);
     }
 
     /**
@@ -95,9 +99,8 @@ public class NBClassifier implements Classifier {
      * @return a double representation of the log probability.
      */
     public double getLogProb(Example ex, double label) {
-        //
-
-        return 0.0;
+        // use helper fxns based on useOnlyPositiveFeatures
+        return this.useOnlyPositiveFeatures ? getPosFeaturesLogProb(ex, label) : getAllFeaturesLogProb(ex, label);
     }
 
     /**
@@ -117,12 +120,51 @@ public class NBClassifier implements Classifier {
         return labelOccurrences / allOccurrences;
     }
 
-    private double getAllFeaturesProb(Example ex, double label) {
+    /**
+     * A helper fxn for calculating the positive features only log probability,
+     * i.e. p(f1, f2, ..., fm, y) for all features f in a given example.
+     *
+     * @param ex
+     * @param label
+     * @return a double representation of the all features log prob. calculation
+     */
+    private double getAllFeaturesLogProb(Example ex, double label) {
+        // init sum as log(prob. of label)
+        double probabilitySum = Math.log10(getLabelProbability(label));
 
+        // loop through all feature indices
+        for (int featureIndex : this.allFeatureOccurrences.keySet()) {
+            // get p(feature | label)
+            double featureProbability = getFeatureProb(featureIndex, label);
+
+            // if example contains feature, log(featureProbability),
+            // otherwise, log(1 - featureProbability).
+            probabilitySum += ex.getFeatureSet().contains(featureIndex)
+                    ? Math.log10(featureProbability)
+                    : Math.log10(1 - featureProbability);
+        }
+
+        return probabilitySum;
     }
 
-    private double getPosFeaturesProb(Example ex, double label) {
+    /**
+     * A helper fxn for calculating the positive features only log probability,
+     * i.e. p(f1, f2, ..., fm, y) for all positive features f in a given example.
+     *
+     * @param ex
+     * @param label
+     * @return a double representation of the positive features log prob. calculation
+     */
+    private double getPosFeaturesLogProb(Example ex, double label) {
+        // init sum as log(prob. of label)
+        double probabilitySum = Math.log10(getLabelProbability(label));
 
+        // sum log(p(feature | label))
+        for (int featureIndex : ex.getFeatureSet()) {
+            probabilitySum += Math.log10(getFeatureProb(featureIndex, label));
+        }
+
+        return probabilitySum;
     }
 
     /**
