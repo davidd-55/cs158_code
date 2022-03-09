@@ -22,14 +22,14 @@ public class Experimenter {
     public static void main(String[] args) {
 
         // init datasets
-        DataSet simpleData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/gdSimple.csv", DataSet.CSVFILE);
-        DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
-        DataSetSplit titanicSplit= titanicData.split(0.8);
-        CrossValidationSet titanicXV = titanicData.getRandomCrossValidationSet(10);
+        DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
+        DataSetSplit wineSplit= wineData.split(0.8);
 
         // init classifier
-        GradientDescentClassifier gdClassifier = new GradientDescentClassifier();
+        NBClassifier nbClassifier = new NBClassifier();
+        nbClassifier.train(wineData);
 
+        /*
         // 1 and 2. Argue for algorithmic correctness
         gdClassifier.setIterations(1);
         gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
@@ -43,92 +43,7 @@ public class Experimenter {
         String exp3Desc = "3. Train GD classifier with hinge loss/no reg. (80/20 split; binary titanic; eta/lambda = 0.01):";
         trainTestClassifier(exp3Desc, true, false, 1, 1, gdClassifier, new ArrayList<>(), titanicSplit);
 
-        // 4. GD train/test with hinge loss/L2 reg. on 80/20 split; binary titanic; eta/lambda = 0.01
-        gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
-        gdClassifier.setRegularization(GradientDescentClassifier.L2_REGULARIZATION);
-        String exp4Desc = "4. Train GD classifier with hinge loss/L2 reg. (80/20 split; binary titanic; eta/lambda = 0.01):";
-        trainTestClassifier(exp4Desc, true, false, 1, 1, gdClassifier, new ArrayList<>(), titanicSplit);
-
-
-        // 5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; binary titanic; eta/lambda 0.001 - 1.00
-        System.out.println("5a. GD train/test eta increasing, lambda increasing, lambda + eta increasing in unison; 80/20 split; binary titanic; eta/lambda 0.001 - 1.00");
-        System.out.println("expValue,eta,lambda,both");
-        gdClassifier.setLoss(GradientDescentClassifier.EXPONENTIAL_LOSS);
-        gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
-        double testVal = 0.001;
-        while (testVal <= 1.0) {
-
-            // increase eta
-            gdClassifier.setEta(testVal);
-            gdClassifier.setLambda(0.01);
-            double etaAccuracy = trainTestClassifier(
-                    "", false, false, 0, 100,
-                    gdClassifier, new ArrayList<>(), titanicSplit);
-
-            // increase lambda
-            gdClassifier.setEta(0.001);
-            gdClassifier.setLambda(testVal);
-            double lambdaAccuracy = trainTestClassifier(
-                    "", false, false, 0, 100,
-                    gdClassifier, new ArrayList<>(), titanicSplit);
-
-            // both!
-            gdClassifier.setEta(testVal);
-            gdClassifier.setLambda(testVal);
-            double bothAccuracy = trainTestClassifier(
-                    "", false, false, 0, 100,
-                    gdClassifier, new ArrayList<>(), titanicSplit);
-
-            System.out.printf("%f,%f,%f,%f\n", testVal, etaAccuracy, lambdaAccuracy, bothAccuracy);
-
-            testVal += 0.001;
-        }
-
-        // 5b. use best found values in tandem! do XV experiments and ttest
-        System.out.println("5b. GD train/test baseline and ideal values; 10-fold XV; binary titanic");
-        System.out.println("fold,base,bestEta,bestLambda,bestBothEqual,bestBothCombo");
-        gdClassifier.setLoss(GradientDescentClassifier.EXPONENTIAL_LOSS);
-        gdClassifier.setRegularization(GradientDescentClassifier.NO_REGULARIZATION);
-        for (int foldIndex = 0; foldIndex < 10; foldIndex++) {
-            DataSetSplit foldSet = titanicXV.getValidationSet(foldIndex);
-
-            // base accuracy
-            gdClassifier.setEta(0.01);
-            gdClassifier.setLambda(0.01);
-            double baseAccuracy = trainTestClassifier(
-                    "", false, false, 0, 1,
-                    gdClassifier, new ArrayList<>(), foldSet);
-
-            // best eta accuracy
-            gdClassifier.setEta(0.002);
-            gdClassifier.setLambda(0.01);
-            double bestEtaAccuracy = trainTestClassifier(
-                    "", false, false, 0, 1,
-                    gdClassifier, new ArrayList<>(), foldSet);
-
-            // best lambda accuracy
-            gdClassifier.setEta(0.01);
-            gdClassifier.setLambda(0.437);
-            double bestLambdaAccuracy = trainTestClassifier(
-                    "", false, false, 0, 1,
-                    gdClassifier, new ArrayList<>(), foldSet);
-
-            // best eta = lambda accuracy
-            gdClassifier.setEta(0.001);
-            gdClassifier.setLambda(0.001);
-            double bestBothEqualAccuracy = trainTestClassifier(
-                    "", false, false, 0, 1,
-                    gdClassifier, new ArrayList<>(), foldSet);
-
-            // best eta and lambda combined accuracy
-            gdClassifier.setEta(0.002);
-            gdClassifier.setLambda(0.437);
-            double bestBothComboAccuracy = trainTestClassifier(
-                    "", false, false, 0, 1,
-                    gdClassifier, new ArrayList<>(), foldSet);
-
-            System.out.printf("%d,%f,%f,%f,%f,%f\n", foldIndex, baseAccuracy, bestEtaAccuracy, bestLambdaAccuracy, bestBothEqualAccuracy, bestBothComboAccuracy);
-        }
+         */
     }
 
     /**
