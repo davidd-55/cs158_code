@@ -2,11 +2,19 @@ package ml;
 
 import ml.classifiers.*;
 import ml.data.*;
-import ml.utils.HashMapCounter;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+
+// TODO questions:
+// 1. how do we decide what lambda values to iterate over? Whole numbers? Tiny increments? etc.
+// 2. do these initial accuracies make sense (~40%)?
+// 3. tbh just confuzzled - "Your NB classifier should treat each feature as a binary feature,
+// that is your probability distributions p(xi|y) are only over two values, positive and negative.
+// We will treat any feature that is both available AND non-zero as positive and any feature that is
+// either not available or zero as negative."
+// 4. is classify the right idea?
+// 5. in getLogProb, we are no longer multiplying but rather summing right?
 
 /**
  * A class to run Gradient Descent classifier experiments
@@ -22,14 +30,51 @@ public class Experimenter {
     public static void main(String[] args) {
 
         // init datasets
+        DataSet simpleData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/simple.data", DataSet.TEXTFILE);
         DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
         DataSetSplit wineSplit= wineData.split(0.8);
 
         // init classifier
         NBClassifier nbClassifier = new NBClassifier();
-        nbClassifier.train(wineData);
+        //nbClassifier.setLambda(0.0);
+        //nbClassifier.setUseOnlyPositiveFeatures(true);
+
+        System.out.println("1. Stats from NB classifier (wine, all features, over 100 iters.):");
+        int iter = 0;
+        for (double lambda = 0.0; lambda <= 100.0; lambda += 0.1) {
+            nbClassifier.setLambda(lambda);
+            //String expDescription = String.format("1-%d. Stats from NB classifier (wine, all features, over 100 iters.):");
+            trainTestClassifier("", true, true, iter++, 1, nbClassifier, new ArrayList<>(), wineSplit);
+        }
+       // nbClassifier.train(simpleData);
 
         /*
+        Example imLovinIt = new Example();
+        imLovinIt.setFeature(2, 1.0);
+        imLovinIt.setFeature(5, 1.0);
+        imLovinIt.setFeature(4, 1.0);
+        imLovinIt.setLabel(0);
+
+        System.out.println(nbClassifier.classify(imLovinIt));
+
+        for (int featureIndex : simpleData.getAllFeatureIndices()) {
+            String featureString = simpleData.getFeatureMap().get(featureIndex);
+            double posFeatureProb = nbClassifier.getFeatureProb(featureIndex, 1);
+            double negFeatureProb = nbClassifier.getFeatureProb(featureIndex, -1);
+
+            System.out.printf("prob. for feature '%s' given positive: %f\n", featureString, posFeatureProb);
+            System.out.printf("prob. for feature '%s' given negative: %f\n", featureString, negFeatureProb);
+        }
+
+        Example imLovinIt = new Example();
+        imLovinIt.setFeature(2, 1.0);
+        imLovinIt.setFeature(5, 1.0);
+        imLovinIt.setFeature(4, 1.0);
+        imLovinIt.setLabel(0);
+
+        System.out.println(nbClassifier.getLogProb(imLovinIt, 1));
+        System.out.println(nbClassifier.getLogProb(imLovinIt, -1));
+
         // 1 and 2. Argue for algorithmic correctness
         gdClassifier.setIterations(1);
         gdClassifier.setLoss(GradientDescentClassifier.HINGE_LOSS);
