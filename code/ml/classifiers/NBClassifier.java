@@ -19,9 +19,8 @@ public class NBClassifier implements Classifier {
     private boolean useOnlyPositiveFeatures;
     private long exampleCount;
     private Set<Integer> featureIndices;
-    private HashMapCounter<Double> labelOccurrences;
-    // private HashMapCounter<Integer> allFeatureOccurrences;
-    private HashMap<Double,HashMapCounter<Integer>> labelFeatureOccurrences;
+    private final HashMapCounter<Double> labelOccurrences;
+    private final HashMap<Double,HashMapCounter<Integer>> labelFeatureOccurrences;
 
     /**
      * Initialize the Naive Bayes classifier. At initialization/without training
@@ -34,7 +33,6 @@ public class NBClassifier implements Classifier {
         this.exampleCount = 0;
         this.featureIndices = new HashSet<>();
         this.labelOccurrences = new HashMapCounter<>();
-        // this.allFeatureOccurrences = new HashMapCounter<>();
         this.labelFeatureOccurrences = new HashMap<>();
     }
 
@@ -60,9 +58,6 @@ public class NBClassifier implements Classifier {
 
             // loop through available features for each example
             for (int featureNum : e.getFeatureSet()) {
-
-                // this.allFeatureOccurrences.increment(featureNum); // increment total count
-
                 // if label not in label feature occurrences map, put it!
                 if (!labelFeatureOccurrences.containsKey(label)) {
                     labelFeatureOccurrences.put(label, new HashMapCounter<>());
@@ -192,7 +187,7 @@ public class NBClassifier implements Classifier {
         double labelOccurrences = this.labelOccurrences.get(label);
 
         // calculate smoothed prob! -> count(feature, label) + lambda / count(label) + possible_feature_vals * lambda
-        return (labelFeatureOccurrences + this.lambda) / (labelOccurrences + (this.featureIndices.size() * this.lambda));
+        return (labelFeatureOccurrences + this.lambda) / (labelOccurrences + (2 * this.lambda));
     }
 
     /**
