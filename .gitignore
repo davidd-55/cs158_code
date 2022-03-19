@@ -28,3 +28,6 @@ hs_err_pid*
 # IntelliJ files
 *.iml
 *.xml
+
+# Java compile
+/out
