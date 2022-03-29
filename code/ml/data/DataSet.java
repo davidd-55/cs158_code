@@ -239,7 +239,6 @@ public class DataSet {
 	 * remains unchanged.  To add a bias to additional examples outside of
 	 * the dataset (e.g. for classifying), call addBiasFeature on the *new* dataset.
 	 *
-	 * @param d
 	 * @return
 	 */
 	public DataSet getCopyWithBias(){
@@ -270,7 +269,7 @@ public class DataSet {
 	 */
 	public Example addBiasFeature(Example e){
 		if( biasFeature == -1 ){
-			throw new RuntimeException("Called DataSet.addBiasFeature on a DataSet that didn't includ a bias");
+			throw new RuntimeException("Called DataSet.addBiasFeature on a DataSet that didn't include a bias");
 		}
 
 		if( e.getFeatureSet().contains(biasFeature) ){
