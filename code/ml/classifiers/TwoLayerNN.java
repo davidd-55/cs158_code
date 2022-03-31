@@ -27,8 +27,13 @@ public class TwoLayerNN implements Classifier {
     private double[][] hiddenWeights;
     private double[] outputWeights; // one-dimensional since we assume 1 output
 
-    // make hidden layer values after forward propagation accessible
-    private double[] hiddenLayerValues;
+    // make pre-activation hidden layer values after forward propagation accessible
+    private double[] hiddenLayerPreActivation;
+    private double outputPreActivation;
+
+    // make post-activation hidden layer values after forward propagation accessible
+    private double[] hiddenLayerPostActivation;
+    private double outputPostActivation;
 
     public TwoLayerNN(int numHiddenNodes) {
         this.numHiddenNodes = numHiddenNodes;
@@ -36,6 +41,8 @@ public class TwoLayerNN implements Classifier {
         this.iterations = 200;
         this.activationFxn = TANH_ACTIVATION;
         this.includeBias = true;
+        this.outputPreActivation = 0.0;
+        this.outputPostActivation = 0.0;
     }
 
     /**
@@ -66,10 +73,10 @@ public class TwoLayerNN implements Classifier {
             for (Example e : training) {
                 // compute example e through the network and update newly
                 // computed hidden layer values
-                double prediction = forwardCompute(e);
+                forwardCompute(e);
 
-                // backpropagation
-                backpropagation(e, prediction);
+                // backpropagation and adjust weights
+                backpropagation(e);
             }
         }
     }
@@ -108,15 +115,21 @@ public class TwoLayerNN implements Classifier {
      * of hidden nodes. Include a hard-coded bias of 1 if specified.
      */
     private void initializeHiddenValues() {
+        // init output pre/post activation values
+        this.outputPreActivation = 0.0;
+        this.outputPostActivation = 0.0;
+
         // init bias value based on number of hidden nodes, +1 if true
         int biasValue = this.includeBias ? this.numHiddenNodes + 1 : this.numHiddenNodes;
 
         // init hidden layer value array to all 0's
-        this.hiddenLayerValues = new double[biasValue];
+        this.hiddenLayerPreActivation = new double[biasValue];
+        this.hiddenLayerPostActivation = new double[biasValue];
 
         // if using bias, set final array value to 1
         if (this.includeBias) {
-            this.hiddenLayerValues[this.hiddenLayerValues.length - 1] = 1.0;
+            this.hiddenLayerPreActivation[biasValue - 1] = 1.0;
+            this.hiddenLayerPostActivation[biasValue - 1] = 1.0;
         }
     }
 
@@ -126,54 +139,66 @@ public class TwoLayerNN implements Classifier {
      * @param e
      * @return a double representing the forward computation result
      */
-    private double forwardCompute(Example e) {
+    private void forwardCompute(Example e) {
         // get feature array from example
         double[] featureValues = getFeatureArray(e);
 
-        // get hidden layer node count; -1 for bias since we don't want
-        // to change hard coded 1 bias node
-        int hiddenLayerNodeCount = this.includeBias ?
-                this.hiddenLayerValues.length - 1:
-                this.hiddenLayerValues.length;
-
-        // first layer calculation loop
-        for (int i = 0; i < hiddenLayerNodeCount; i++) {
+        // first layer calculation loop; use num hidden nodes since it won't overwrite
+        // bias value if it's included
+        for (int k = 0; k < this.numHiddenNodes; k++) {
             // get all feature weights for a first layer node d
-            double[] hiddenNodeWeights = this.hiddenWeights[i];
+            double[] hiddenNodeWeights = this.hiddenWeights[k];
 
-            // save activation of dot product calc (feature array . hidden layer node weight array)
-            this.hiddenLayerValues[i] = calculateActivation(dotProduct(featureValues, hiddenNodeWeights));
+            // calculate weights (wk) . feature values (x)
+            double wkDotX = dotProduct(hiddenNodeWeights, featureValues);
+
+            // save hidden layer dot product calc pre and post activation
+            this.hiddenLayerPreActivation[k] = wkDotX;
+            this.hiddenLayerPostActivation[k] = calculateActivation(wkDotX);
+
         }
 
-        // hidden layer dot product calc (hidden layer vals 'v' dot output layer weight array 'h')
-        return calculateActivation(dotProduct(this.hiddenLayerValues,this.outputWeights));
+        // hidden layer dot product calc (hidden layer vals post act 'v' . output layer weight array 'h')
+        double vDotH = dotProduct(this.hiddenLayerPostActivation, this.outputWeights);
+
+        // save output dot product calc pre and post activation
+        this.outputPreActivation = vDotH;
+        this.outputPostActivation = calculateActivation(vDotH);
     }
 
     /**
      * Perform the backwards propagation of error through the network's weights from the
      * output of the network for a given example.
      */
-    private void backpropagation(Example e, double prediction) {
-        // get label
-        double label = e.getLabel();
+    private void backpropagation(Example e) {
+        // get label and prediction
+        double labelMinusPrediction = e.getLabel() - this.outputPostActivation;
 
         // loop through/update output weights first; get f'(v . h)
-        double vDotHDerivative = calculateActivationDerivative(
-                dotProduct(this.hiddenLayerValues,this.outputWeights));
-        for (int i =0; i < this.outputWeights.length; i++) {
-            // get current weight and hidden node value
-            //double currWeight = this.outputWeights[i];
-            double currHiddenVal = this.hiddenLayerValues[i];
+        double vDotHDerivative = calculateActivationDerivative(this.outputPreActivation);
+        for (int k =0; k < this.outputWeights.length; k++) {
+            // get current hidden node post activation value
+            double currHiddenVal = this.hiddenLayerPostActivation[k];
 
-            // TODO: is hk the node value with activation already computed? - YES!
             // weight update: vk = vk + (eta * hk * (label - prediction) * f'(v . h))
-            this.outputWeights[i] += this.eta * currHiddenVal * (label - prediction) * vDotHDerivative;
+            this.outputWeights[k] += this.eta * currHiddenVal * labelMinusPrediction * vDotHDerivative;
         }
 
         // then loop through/update hidden weights
-        for (double[] currRow : this.hiddenWeights) {
-            for (int i = 0; i < currRow.length; i++) {
-                // currRow[i] = getRandomWeightValue();
+        for (int k = 0; k < this.hiddenWeights.length; k++) {
+            // get current row
+            double[] currRow = this.hiddenWeights[k];
+
+            // get f'(wk . x)
+            double wkDotXDerivative = calculateActivationDerivative(this.hiddenLayerPreActivation[k]);
+
+            // loop through each weight respective to a node
+            for (int j = 0; j < currRow.length; j++) {
+                // get feature j from example x
+                double xj = e.getFeature(j);
+
+                // weight update: wkj = wkj + (eta * xj * f'(wk . x) * f'(v . h) * (label - prediction))
+                currRow[j] += this.eta * xj * wkDotXDerivative * vDotHDerivative * labelMinusPrediction;
             }
         }
     }
@@ -186,8 +211,17 @@ public class TwoLayerNN implements Classifier {
      */
     @Override
     public double classify(Example example) {
+        // create copy example to classify
+        Example exampleToClassify = new Example(example);
+
+        // add bias if necessary
+        if (this.includeBias) {
+            exampleToClassify.addFeature(exampleToClassify.getFeatureSet().size(), 1.0);
+        }
+
         // TODO: sigmoid 0 instead of -1.0
-        return forwardCompute(example) > 0 ? 1.0 : -1.0;
+        forwardCompute(exampleToClassify);
+        return this.outputPostActivation > 0 ? 1.0 : -1.0;
     }
 
     /**
@@ -200,7 +234,8 @@ public class TwoLayerNN implements Classifier {
      */
     @Override
     public double confidence(Example example) {
-        return Math.abs(forwardCompute(example));
+        forwardCompute(example);
+        return Math.abs(this.outputPostActivation);
     }
 
     /**

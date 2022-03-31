@@ -30,10 +30,14 @@ public class Experimenter {
         TwoLayerNN twoLayerNNWithBias = new TwoLayerNN(3);
         twoLayerNNWithBias.setIncludeBias(true);
 
-        twoLayerNNNoBias.train(titanicSplit.getTrain());
-        twoLayerNNWithBias.train(titanicSplit.getTrain());
+        // twoLayerNNNoBias.train(titanicSplit.getTrain());
+        // twoLayerNNWithBias.train(titanicSplit.getTrain());
 
-        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
+        // double noBiasAccuracy = trainTestClassifier(1, twoLayerNNNoBias, new ArrayList<>(), titanicSplit);
+        double withBiasAccuracy = trainTestClassifier(1, twoLayerNNWithBias, new ArrayList<>(), titanicSplit);
+
+        // System.out.printf("No bias accuracy: %f\n", noBiasAccuracy);
+        System.out.printf("With bias accuracy: %f\n", withBiasAccuracy);
 
 //        // 1 & 2 - choosing best lambda
 //        // lambda 0 - 10
