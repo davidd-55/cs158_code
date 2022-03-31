@@ -20,105 +20,38 @@ public class Experimenter {
     public static void main(String[] args) {
 
         // init datasets
-        DataSet wineData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/wines.train", DataSet.TEXTFILE);
-        DataSetSplit wineSplit= wineData.split(0.8);
-        CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
+        DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
+        DataSetSplit titanicSplit= titanicData.split(0.8);
+        //CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
-        // init classifiers
-        NBClassifier nbClassifierAllFeats = new NBClassifier();
-        nbClassifierAllFeats.setUseOnlyPositiveFeatures(false);
+        // init NN classifiers
+        TwoLayerNN twoLayerNNNoBias = new TwoLayerNN(3);
+        twoLayerNNNoBias.setIncludeBias(false);
+        TwoLayerNN twoLayerNNWithBias = new TwoLayerNN(3);
+        twoLayerNNWithBias.setIncludeBias(true);
 
-        NBClassifier nbClassifierPosFeats = new NBClassifier();
-        nbClassifierPosFeats.setUseOnlyPositiveFeatures(true);
+        twoLayerNNNoBias.train(titanicSplit.getTrain());
+        twoLayerNNWithBias.train(titanicSplit.getTrain());
 
-        // 1 & 2 - choosing best lambda
-        // lambda 0 - 10
-        System.out.println("1&2a. Stats from NB all/pos features classifiers (wine, lambda 0 - 10):");
         System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-        for (double lambda = 0.0; lambda <= 10.0; lambda += 1.0) {
-            // set lambda
-            nbClassifierAllFeats.setLambda(lambda);
-            nbClassifierPosFeats.setLambda(lambda);
 
-            // get accuracies
-            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineSplit);
-            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineSplit);
-
-            // print csv stats
-            System.out.printf("%f,%f,%f\n", lambda, currAllFeatsAccuracy, currPosFeatsAccuracy);
-        }
-        System.out.println();
-
-        // lambda 0 - 1
-        System.out.println("1&2b. Stats from NB all/pos features classifiers (wine, lambda 0 - 1):");
-        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-        for (double lambda = 0.0; lambda <= 1.0; lambda += 0.1) {
-            // set lambda
-            nbClassifierAllFeats.setLambda(lambda);
-            nbClassifierPosFeats.setLambda(lambda);
-
-            // get accuracies
-            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineSplit);
-            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineSplit);
-
-            // print csv stats
-            System.out.printf("%f,%f,%f\n", lambda, currAllFeatsAccuracy, currPosFeatsAccuracy);
-        }
-        System.out.println();
-
-        // lambda 0 - 0.1
-        System.out.println("1&2c. Stats from NB all/pos features classifiers (wine, lambda 0 - 0.1):");
-        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-        for (double lambda = 0.0; lambda <= 0.1; lambda += 0.001) {
-            // set lambda
-            nbClassifierAllFeats.setLambda(lambda);
-            nbClassifierPosFeats.setLambda(lambda);
-
-            // get accuracies
-            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineSplit);
-            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineSplit);
-
-            // print csv stats
-            System.out.printf("%f,%f,%f\n", lambda, currAllFeatsAccuracy, currPosFeatsAccuracy);
-        }
-        System.out.println();
-
-        // 3. comparing AFA vs. PFA approaches with default lambda and best performing lambdas
-        // set lambda to default 0.01
-        nbClassifierAllFeats.setLambda(0.01);
-        nbClassifierPosFeats.setLambda(0.01);
-        System.out.println("3a. Stats from NB all/pos features classifiers (wineXV, lambda = 0.01):");
-        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-        for (int fold = 0; fold < 10; fold++) {
-            // get data fold
-            DataSetSplit wineFold = wineXV.getValidationSet(fold);
-
-            // get accuracies
-            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineFold);
-            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineFold);
-
-            // print csv stats
-            System.out.printf("%d,%f,%f\n", fold, currAllFeatsAccuracy, currPosFeatsAccuracy);
-        }
-        System.out.println();
-
-        // set lambda to 0.045 for AFA and 0.025 for PFA (best performing).
-        nbClassifierAllFeats.setLambda(0.045);
-        nbClassifierPosFeats.setLambda(0.025);
-        System.out.println("3b. Stats from NB all/pos features classifiers (wineXV, lambdaAFA = 0.045, lambdaPFA = 0.025):");
-        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-        for (int fold = 0; fold < 10; fold++) {
-            // get data fold
-            DataSetSplit wineFold = wineXV.getValidationSet(fold);
-
-            // get accuracies
-            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineFold);
-            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineFold);
-
-            // print csv stats
-            System.out.printf("%d,%f,%f\n", fold, currAllFeatsAccuracy, currPosFeatsAccuracy);
-        }
-        System.out.println();
+//        // 1 & 2 - choosing best lambda
+//        // lambda 0 - 10
+//        System.out.println("1&2a. Stats from NB all/pos features classifiers (wine, lambda 0 - 10):");
+//        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
+//        for (double lambda = 0.0; lambda <= 10.0; lambda += 1.0) {
+//            // set lambda
+//            nbClassifierAllFeats.setLambda(lambda);
+//            nbClassifierPosFeats.setLambda(lambda);
+//
+//            // get accuracies
+//            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineSplit);
+//            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineSplit);
+//
+//            // print csv stats
+//            System.out.printf("%f,%f,%f\n", lambda, currAllFeatsAccuracy, currPosFeatsAccuracy);
+//        }
+//        System.out.println();
     }
 
     /**

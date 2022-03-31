@@ -5,6 +5,7 @@ import ml.data.Example;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 public class TwoLayerNN implements Classifier {
 
@@ -12,9 +13,8 @@ public class TwoLayerNN implements Classifier {
     public static final int TANH_ACTIVATION = 0;
     public static final int SIGMOID_ACTIVATION = 1;
 
-    // set min/max random weight vals
-    private static final double MIN_RANDOM_WEIGHT = -0.1;
-    private static final double MAX_RANDOM_WEIGHT = 0.1;
+    // randomizer for initial weight values
+    private static final Random RANDOM = new Random();
 
     // network-specific instance vars
     private final int numHiddenNodes;
@@ -64,17 +64,13 @@ public class TwoLayerNN implements Classifier {
 
             // loop through examples
             for (Example e : training) {
-                // compute example e through the network
-                // saves newly computed hidden layer values
-                double result = forwardCompute(e);
+                // compute example e through the network and update newly
+                // computed hidden layer values
+                double prediction = forwardCompute(e);
 
                 // backpropagation
-
+                backpropagation(e, prediction);
             }
-
-            // make some array to hold first layer computations + bias
-
-            // activationFxn(sum(vali * weighti)) --> sum of all vals * weights from one node
         }
     }
 
@@ -134,17 +130,52 @@ public class TwoLayerNN implements Classifier {
         // get feature array from example
         double[] featureValues = getFeatureArray(e);
 
-        // first layer calculation loop
-        for (int i = 0; i < this.hiddenLayerValues.length; i++) {
-            // get all feature weights for a first layer node d
-            double[] hiddenWeights = this.hiddenWeights[i];
+        // get hidden layer node count; -1 for bias since we don't want
+        // to change hard coded 1 bias node
+        int hiddenLayerNodeCount = this.includeBias ?
+                this.hiddenLayerValues.length - 1:
+                this.hiddenLayerValues.length;
 
-            // save activation of dot product calc (feature array . hidden layer weight array)
-            this.hiddenLayerValues[i] = calculateActivation(dotProduct(featureValues, hiddenWeights));
+        // first layer calculation loop
+        for (int i = 0; i < hiddenLayerNodeCount; i++) {
+            // get all feature weights for a first layer node d
+            double[] hiddenNodeWeights = this.hiddenWeights[i];
+
+            // save activation of dot product calc (feature array . hidden layer node weight array)
+            this.hiddenLayerValues[i] = calculateActivation(dotProduct(featureValues, hiddenNodeWeights));
         }
 
-        // hidden layer dot product calc (hidden layer vals . output layer weight array)
+        // hidden layer dot product calc (hidden layer vals 'v' dot output layer weight array 'h')
         return calculateActivation(dotProduct(this.hiddenLayerValues,this.outputWeights));
+    }
+
+    /**
+     * Perform the backwards propagation of error through the network's weights from the
+     * output of the network for a given example.
+     */
+    private void backpropagation(Example e, double prediction) {
+        // get label
+        double label = e.getLabel();
+
+        // loop through/update output weights first; get f'(v . h)
+        double vDotHDerivative = calculateActivationDerivative(
+                dotProduct(this.hiddenLayerValues,this.outputWeights));
+        for (int i =0; i < this.outputWeights.length; i++) {
+            // get current weight and hidden node value
+            double currWeight = this.outputWeights[i];
+            double currHiddenVal = this.hiddenLayerValues[i];
+
+            // TODO: is hk the node value with activation already computed?
+            // weight update: vk = vk + (eta * hk * (label - prediction) * f'(v . h))
+            this.outputWeights[i] = currWeight + (this.eta * currHiddenVal * (label - prediction) * vDotHDerivative);
+        }
+
+        // then loop through/update hidden weights
+        for (double[] currRow : this.hiddenWeights) {
+            for (int i = 0; i < currRow.length; i++) {
+                // currRow[i] = getRandomWeightValue();
+            }
+        }
     }
 
     /**
@@ -184,6 +215,21 @@ public class TwoLayerNN implements Classifier {
             return Math.tanh(input);
         } else { // sigmoid activation
             return 1 / (1 + Math.exp(-1 * input));
+        }
+    }
+
+    /**
+     * A helper fxn for calculating the specified activation fxn's derivative result for a given input.
+     *
+     * @param input
+     * @return a double representing the derivative of the result of the specified activation fxn
+     */
+    private double calculateActivationDerivative(double input) {
+        // tanh activation derivative; t'(x) = 1 - (t(x)^2)
+        if (this.activationFxn == TANH_ACTIVATION) {
+            return 1 - Math.pow(Math.tanh(input), 2);
+        } else { // sigmoid activation derivative; s'(x) = s(x) * (1 - s(x))
+            return (1 / (1 + Math.exp(-1 * input)) * (1 - (1 / (1 + Math.exp(-1 * input)))));
         }
     }
 
@@ -291,8 +337,8 @@ public class TwoLayerNN implements Classifier {
      * @return a double represent
      */
     private static double getRandomWeightValue() {
-        // return random value between min and max
-        return (Math.random() * ((MAX_RANDOM_WEIGHT - MIN_RANDOM_WEIGHT) + 1)) + MIN_RANDOM_WEIGHT;
+        // return random value between -0.1 and 0.1
+        return (RANDOM.nextBoolean() ? 1 : -1) * (RANDOM.nextDouble() * 0.1);
     }
 
     /**
