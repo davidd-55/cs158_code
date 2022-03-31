@@ -162,12 +162,12 @@ public class TwoLayerNN implements Classifier {
                 dotProduct(this.hiddenLayerValues,this.outputWeights));
         for (int i =0; i < this.outputWeights.length; i++) {
             // get current weight and hidden node value
-            double currWeight = this.outputWeights[i];
+            //double currWeight = this.outputWeights[i];
             double currHiddenVal = this.hiddenLayerValues[i];
 
-            // TODO: is hk the node value with activation already computed?
+            // TODO: is hk the node value with activation already computed? - YES!
             // weight update: vk = vk + (eta * hk * (label - prediction) * f'(v . h))
-            this.outputWeights[i] = currWeight + (this.eta * currHiddenVal * (label - prediction) * vDotHDerivative);
+            this.outputWeights[i] += this.eta * currHiddenVal * (label - prediction) * vDotHDerivative;
         }
 
         // then loop through/update hidden weights
