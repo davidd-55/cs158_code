@@ -25,16 +25,13 @@ public class Experimenter {
         //CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
         // init NN classifiers
-        TwoLayerNN twoLayerNNNoBias = new TwoLayerNN(3);
-        twoLayerNNNoBias.setIncludeBias(false);
-        TwoLayerNN twoLayerNNWithBias = new TwoLayerNN(3);
-        twoLayerNNWithBias.setIncludeBias(true);
+        TwoLayerNN twoLayerNN = new TwoLayerNN(3);
 
         // twoLayerNNNoBias.train(titanicSplit.getTrain());
         // twoLayerNNWithBias.train(titanicSplit.getTrain());
 
         // double noBiasAccuracy = trainTestClassifier(1, twoLayerNNNoBias, new ArrayList<>(), titanicSplit);
-        double withBiasAccuracy = trainTestClassifier(1, twoLayerNNWithBias, new ArrayList<>(), titanicSplit);
+        double withBiasAccuracy = trainTestClassifier(1, twoLayerNN, new ArrayList<>(), titanicSplit);
 
         // System.out.printf("No bias accuracy: %f\n", noBiasAccuracy);
         System.out.printf("With bias accuracy: %f\n", withBiasAccuracy);
