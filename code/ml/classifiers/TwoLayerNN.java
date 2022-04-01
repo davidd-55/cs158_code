@@ -56,10 +56,13 @@ public class TwoLayerNN implements Classifier {
         // determine whether we need to generate a dataset with bias feature
         DataSet dataToTrain = this.includeBias ? data.getCopyWithBias() : data;
 
+        // for sanity check
+        // initializeExampleWeights(); // uncomment for handout example
+
         // init network weights and hidden values
         int featureCount = dataToTrain.getFeatureMap().size();
         initializeWeights(featureCount);
-        initializeHiddenValues();
+        initializeHiddenValues(); // comment for handout example
 
         // get data
         ArrayList<Example> training = (ArrayList<Example>)dataToTrain.getData().clone();
@@ -155,7 +158,6 @@ public class TwoLayerNN implements Classifier {
             // save hidden layer dot product calc pre and post activation
             this.hiddenLayerPreActivation[k] = wkDotX;
             this.hiddenLayerPostActivation[k] = calculateActivation(wkDotX);
-
         }
 
         // hidden layer dot product calc (hidden layer vals post act 'v' . output layer weight array 'h')
@@ -171,6 +173,9 @@ public class TwoLayerNN implements Classifier {
      * output of the network for a given example.
      */
     private void backpropagation(Example e) {
+        // set up array to hold prev output weights
+        double[] prevOutputWeights = new double[this.outputWeights.length];
+
         // get label and prediction
         double labelMinusPrediction = e.getLabel() - this.outputPostActivation;
 
@@ -179,6 +184,9 @@ public class TwoLayerNN implements Classifier {
         for (int k =0; k < this.outputWeights.length; k++) {
             // get current hidden node post activation value
             double currHiddenVal = this.hiddenLayerPostActivation[k];
+
+            // save old vk (output weight)
+            prevOutputWeights[k] = this.outputWeights[k];
 
             // weight update: vk = vk + (eta * hk * (label - prediction) * f'(v . h))
             this.outputWeights[k] += this.eta * currHiddenVal * labelMinusPrediction * vDotHDerivative;
@@ -189,7 +197,8 @@ public class TwoLayerNN implements Classifier {
             // get current row
             double[] currRow = this.hiddenWeights[k];
 
-            // get f'(wk . x)
+            // get vk (pre-update) and f'(wk . x)
+            double vk = prevOutputWeights[k];
             double wkDotXDerivative = calculateActivationDerivative(this.hiddenLayerPreActivation[k]);
 
             // loop through each weight respective to a node
@@ -197,8 +206,8 @@ public class TwoLayerNN implements Classifier {
                 // get feature j from example x
                 double xj = e.getFeature(j);
 
-                // weight update: wkj = wkj + (eta * xj * f'(wk . x) * f'(v . h) * (label - prediction))
-                currRow[j] += this.eta * xj * wkDotXDerivative * vDotHDerivative * labelMinusPrediction;
+                // weight update: wkj = wkj + (eta * xj * f'(wk . x) * vk (pre-update) * f'(v . h) * (label - prediction))
+                currRow[j] += this.eta * xj * wkDotXDerivative * vk * vDotHDerivative * labelMinusPrediction;
             }
         }
     }
@@ -398,5 +407,29 @@ public class TwoLayerNN implements Classifier {
         }
 
         System.out.println(s.append(" ]"));
+    }
+
+    /**
+     * A helper fxn used to initialize the NN's weights to the demo weights
+     * provided ion the handout.
+     */
+    private void initializeExampleWeights() {
+        // [
+        //  [ w11: -0.7, w21: 1.6, bias1: -1.8]
+        //  [ w12: 0.03, w22: 0.6, bias2: -1.4]
+        // ]
+        this.hiddenWeights = new double[2][3];
+        this.hiddenWeights[0][0] = -0.7;
+        this.hiddenWeights[0][1] = 1.6;
+        this.hiddenWeights[0][2] = -1.8;
+        this.hiddenWeights[1][0] = 0.03;
+        this.hiddenWeights[1][1] = 0.6;
+        this.hiddenWeights[1][2] = -1.4;
+
+        // [v1: -1.1, v2: -0.6, bias: 1.8]
+        this.outputWeights = new double[3];
+        this.outputWeights[0] = -1.1;
+        this.outputWeights[1] = -0.6;
+        this.outputWeights[2] = 1.8;
     }
 }

@@ -18,6 +18,14 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
+        // sanity check!
+        /*
+        DataSet demoData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/a08_demo.csv", DataSet.CSVFILE);
+        TwoLayerNN demoNN = new TwoLayerNN(2);
+        demoNN.setEta(0.5);
+        demoNN.setIterations(1);
+        demoNN.train(demoData);
+         */
 
         // init datasets
         DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
@@ -31,7 +39,7 @@ public class Experimenter {
         // twoLayerNNWithBias.train(titanicSplit.getTrain());
 
         // double noBiasAccuracy = trainTestClassifier(1, twoLayerNNNoBias, new ArrayList<>(), titanicSplit);
-        double withBiasAccuracy = trainTestClassifier(1, twoLayerNN, new ArrayList<>(), titanicSplit);
+        double withBiasAccuracy = trainTestClassifier(100, twoLayerNN, new ArrayList<>(), titanicSplit);
 
         // System.out.printf("No bias accuracy: %f\n", noBiasAccuracy);
         System.out.printf("With bias accuracy: %f\n", withBiasAccuracy);
