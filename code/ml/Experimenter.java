@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A class to run Naive Bayes classifier experiments
+ * A class to run two-layer NN classifier experiments
  *
- * Prepared for CS158 Assignment 07b. Authored by David D'Attile
+ * Prepared for CS158 Assignment 08. Authored by David D'Attile
  */
 public class Experimenter {
 
@@ -18,31 +18,30 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
-        // sanity check!
-        /*
-        DataSet demoData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/a08_demo.csv", DataSet.CSVFILE);
-        TwoLayerNN demoNN = new TwoLayerNN(2);
-        demoNN.setEta(0.5);
-        demoNN.setIterations(1);
-        demoNN.train(demoData);
-         */
-
         // init datasets
+        DataSet demoData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/a08_demo.csv", DataSet.CSVFILE);
         DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
-        DataSetSplit titanicSplit= titanicData.split(0.8);
+        DataSetSplit titanicSplit= titanicData.split(0.9);
         //CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
 
         // init NN classifiers
+        TwoLayerNNExample exampleNN = new TwoLayerNNExample();
+        exampleNN.setEta(0.5);
+        exampleNN.setIterations(1);
         TwoLayerNN twoLayerNN = new TwoLayerNN(3);
 
-        // twoLayerNNNoBias.train(titanicSplit.getTrain());
-        // twoLayerNNWithBias.train(titanicSplit.getTrain());
+        // Q1. Example network node and weight values
+        System.out.println("Q1. Example network node and weight values:");
+        exampleNN.train(demoData);
+        exampleNN.printNodeValues();
+        exampleNN.printWeights();
+
+        // Q2. Visualize testing/training accuracy and loss during network training
+        System.out.println("Q2. Visualize testing/training accuracy and loss during network training:");
+        twoLayerNN.train(titanicSplit.getTrain(), titanicSplit.getTest());
 
         // double noBiasAccuracy = trainTestClassifier(1, twoLayerNNNoBias, new ArrayList<>(), titanicSplit);
-        double withBiasAccuracy = trainTestClassifier(100, twoLayerNN, new ArrayList<>(), titanicSplit);
-
-        // System.out.printf("No bias accuracy: %f\n", noBiasAccuracy);
-        System.out.printf("With bias accuracy: %f\n", withBiasAccuracy);
+        // double withBiasAccuracy = trainTestClassifier(100, twoLayerNN, new ArrayList<>(), titanicSplit);]
 
 //        // 1 & 2 - choosing best lambda
 //        // lambda 0 - 10

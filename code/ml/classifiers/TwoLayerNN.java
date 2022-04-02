@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
+/**
+ * A class to represent a two-layer NN classifier
+ *
+ * Prepared for CS158 Assignment 08. Authored by David D'Attile
+ */
 public class TwoLayerNN implements Classifier {
 
     // constants for the different activation functions
@@ -23,17 +28,18 @@ public class TwoLayerNN implements Classifier {
     private double iterations;
     private boolean includeBias;
 
+    // all protected for TwoLayerNNExample class
     // set up weight matrices
-    private double[][] hiddenWeights;
-    private double[] outputWeights; // one-dimensional since we assume 1 output
+    protected double[][] hiddenWeights;
+    protected double[] outputWeights; // one-dimensional since we assume 1 output
 
     // make pre-activation hidden layer values after forward propagation accessible
-    private double[] hiddenLayerPreActivation;
-    private double outputPreActivation;
+    protected double[] hiddenLayerPreActivation;
+    protected double outputPreActivation;
 
     // make post-activation hidden layer values after forward propagation accessible
-    private double[] hiddenLayerPostActivation;
-    private double outputPostActivation;
+    protected double[] hiddenLayerPostActivation;
+    protected double outputPostActivation;
 
     public TwoLayerNN(int numHiddenNodes) {
         this.numHiddenNodes = numHiddenNodes;
@@ -55,9 +61,6 @@ public class TwoLayerNN implements Classifier {
     public void train(DataSet data) {
         // determine whether we need to generate a dataset with bias feature
         DataSet dataToTrain = this.includeBias ? data.getCopyWithBias() : data;
-
-        // for sanity check
-        // initializeExampleWeights(); // uncomment for handout example
 
         // init network weights and hidden values
         int featureCount = dataToTrain.getFeatureMap().size();
@@ -90,7 +93,7 @@ public class TwoLayerNN implements Classifier {
      *
      * @param featureCount
      */
-    private void initializeWeights(int featureCount) {
+    protected void initializeWeights(int featureCount) {
         // init bias value
         int biasValue = this.includeBias ? this.numHiddenNodes + 1 : this.numHiddenNodes;
 
@@ -221,12 +224,7 @@ public class TwoLayerNN implements Classifier {
     @Override
     public double classify(Example example) {
         // create copy example to classify
-        Example exampleToClassify = new Example(example);
-
-        // add bias if necessary
-        if (this.includeBias) {
-            exampleToClassify.addFeature(exampleToClassify.getFeatureSet().size(), 1.0);
-        }
+        Example exampleToClassify = addExampleBias(example);
 
         // TODO: sigmoid 0 instead of -1.0
         forwardCompute(exampleToClassify);
@@ -245,6 +243,18 @@ public class TwoLayerNN implements Classifier {
     public double confidence(Example example) {
         forwardCompute(example);
         return Math.abs(this.outputPostActivation);
+    }
+
+    private Example addExampleBias(Example e) {
+        // create copy example to classify
+        Example exampleToAddBias = new Example(e);
+
+        // add bias if necessary
+        if (this.includeBias && exampleToAddBias.getFeatureSet().size() != this.hiddenWeights[0].length) {
+            exampleToAddBias.addFeature(exampleToAddBias.getFeatureSet().size(), 1.0);
+        }
+
+        return exampleToAddBias;
     }
 
     /**
@@ -386,50 +396,94 @@ public class TwoLayerNN implements Classifier {
     }
 
     /**
-     * A helper fxn for nicely printing a double array.
+     * Train this classifier based on the data set given and print metrics on-the-fly
+     * as specified by assignment 8 question 2.
      *
-     * @param array
+     * THIS FUNCTION IS EQUIVALENT TO train(DataSet) EXCEPT IN ITS PRINTING/SUMMING OF STATS
+     * AND ABILITY TO GAUGE TESTING ACCURACY
+     *
+     * @param dataTrain
+     * @param dataTest
      */
-    private static void printArray(double[] array) {
-        // init string builder
-        StringBuilder s = new StringBuilder("[ ");
+    @SuppressWarnings("unchecked")
+    public void train(DataSet dataTrain, DataSet dataTest) {
+        // determine whether we need to generate a dataset with bias feature
+        DataSet dataToTrain = this.includeBias ? dataTrain.getCopyWithBias() : dataTrain;
 
-        // append values to string
-        for (int i = 0; i < array.length; i++) {
-            double val = array[i];
+        // init network weights and hidden values
+        int featureCount = dataToTrain.getFeatureMap().size();
+        initializeWeights(featureCount);
+        initializeHiddenValues(); // comment for handout example
 
-            // edge case for last val
-            if (i < array.length - 1) {
-                s.append(String.format("%f, ", val));
-            } else {
-                s.append(String.format("%f", val));
+        // get data
+        ArrayList<Example> training = (ArrayList<Example>)dataToTrain.getData().clone();
+
+        /* NEW CODE START */
+        System.out.println("iteration,sumSquaredError,trainAccuracy,TestAccuracy");
+        /* NEW CODE END */
+
+        // loop through iterations
+        for (int i = 0; i < this.iterations; i++) {
+            // shuffle data
+            Collections.shuffle(training);
+
+            // loop through examples
+            for (Example e : training) {
+                // compute example e through the network and update newly
+                // computed hidden layer values
+                forwardCompute(e);
+
+                // backpropagation and adjust weights
+                backpropagation(e);
             }
-        }
 
-        System.out.println(s.append(" ]"));
+            /* NEW CODE Start */
+            // init sum squared error and train/test counters
+            double sumSquaredError = 0.0;
+            int correctTrainGuesses = 0;
+            int totalTrainGuesses = 0;
+            int correctTestGuesses = 0;
+            int totalTestGuesses = 0;
+
+            // calculate training stats for iteration
+            for (Example trainE : training) {
+                double label = trainE.getLabel();
+                double prediction = classify(trainE);
+
+                sumSquaredError += calculateSquaredError(label, prediction);
+                if (label == prediction) {
+                    correctTrainGuesses++;
+                }
+                totalTrainGuesses++;
+            }
+
+            // calculate testing stats for iteration
+            for (Example testE : dataTest.getData()) {
+                double label = testE.getLabel();
+                double prediction = classify(testE);
+
+                sumSquaredError += calculateSquaredError(label, prediction);
+                if (label == prediction) {
+                    correctTestGuesses++;
+                }
+                totalTestGuesses++;
+            }
+
+            System.out.printf("%d,%f,%f,%f\n", i + 1, sumSquaredError,
+                    (double)correctTrainGuesses / (double)totalTrainGuesses,
+                    (double)correctTestGuesses / (double)totalTestGuesses);
+            /* NEW CODE END */
+        }
     }
 
     /**
-     * A helper fxn used to initialize the NN's weights to the demo weights
-     * provided ion the handout.
+     * A helper fxn for calculating squared error
+     *
+     * @param label
+     * @param prediction
+     * @return
      */
-    private void initializeExampleWeights() {
-        // [
-        //  [ w11: -0.7, w21: 1.6, bias1: -1.8]
-        //  [ w12: 0.03, w22: 0.6, bias2: -1.4]
-        // ]
-        this.hiddenWeights = new double[2][3];
-        this.hiddenWeights[0][0] = -0.7;
-        this.hiddenWeights[0][1] = 1.6;
-        this.hiddenWeights[0][2] = -1.8;
-        this.hiddenWeights[1][0] = 0.03;
-        this.hiddenWeights[1][1] = 0.6;
-        this.hiddenWeights[1][2] = -1.4;
-
-        // [v1: -1.1, v2: -0.6, bias: 1.8]
-        this.outputWeights = new double[3];
-        this.outputWeights[0] = -1.1;
-        this.outputWeights[1] = -0.6;
-        this.outputWeights[2] = 1.8;
+    private static double calculateSquaredError(double label, double prediction) {
+        return Math.pow(label - prediction, 2);
     }
 }
