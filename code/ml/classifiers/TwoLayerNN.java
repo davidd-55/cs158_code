@@ -226,9 +226,14 @@ public class TwoLayerNN implements Classifier {
         // create copy example to classify
         Example exampleToClassify = addExampleBias(example);
 
-        // TODO: sigmoid 0 instead of -1.0
+        // set threshold/min value depending on tanh or sigmnoid activation
+        double maxLabel = 1.0;
+        double minLabel = this.activationFxn == TANH_ACTIVATION ? -1.0 : 0.0;
+        double threshold = this.activationFxn == TANH_ACTIVATION ? 0.0 : 0.5;
+
+        // compute and classify
         forwardCompute(exampleToClassify);
-        return this.outputPostActivation > 0 ? 1.0 : -1.0;
+        return this.outputPostActivation > threshold ? maxLabel : minLabel;
     }
 
     /**
@@ -241,10 +246,20 @@ public class TwoLayerNN implements Classifier {
      */
     @Override
     public double confidence(Example example) {
-        forwardCompute(example);
+        // create copy example to classify
+        Example exampleToClassify = addExampleBias(example);
+
+        forwardCompute(exampleToClassify);
         return Math.abs(this.outputPostActivation);
     }
 
+    /**
+     * A helper method for adding bias to an example if necessary before classifying or calculating
+     * confidence.
+     *
+     * @param e
+     * @return
+     */
     private Example addExampleBias(Example e) {
         // create copy example to classify
         Example exampleToAddBias = new Example(e);

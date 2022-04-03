@@ -18,48 +18,191 @@ public class Experimenter {
      * @param args
      */
     public static void main(String[] args) {
-        // init datasets
+        // init datasets demo, titanic, and titanic (sigmoid) data sets
         DataSet demoData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/a08_demo.csv", DataSet.CSVFILE);
+
         DataSet titanicData = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
         DataSetSplit titanicSplit= titanicData.split(0.9);
-        //CrossValidationSet wineXV = wineData.getCrossValidationSet(10);
+        CrossValidationSet titanicXV = titanicData.getCrossValidationSet(10);
 
-        // init NN classifiers
-        TwoLayerNNExample exampleNN = new TwoLayerNNExample();
-        exampleNN.setEta(0.5);
-        exampleNN.setIterations(1);
-        TwoLayerNN twoLayerNN = new TwoLayerNN(3);
+        DataSet titanicDataSigmoid = new DataSet("/Users/daviddattile/Dev/cs158_code/data/titanic-train.csv", DataSet.CSVFILE);
+        changeLabel(titanicDataSigmoid, -1.0, 0.0);
+        CrossValidationSet titanicSigmoidXV= titanicDataSigmoid.getCrossValidationSet(10);
+
 
         // Q1. Example network node and weight values
         System.out.println("Q1. Example network node and weight values:");
+
+        // init network
+        TwoLayerNNExample exampleNN = new TwoLayerNNExample();
+        exampleNN.setEta(0.5);
+        exampleNN.setIterations(1);
+
+        // train and get weights
         exampleNN.train(demoData);
         exampleNN.printNodeValues();
         exampleNN.printWeights();
 
         // Q2. Visualize testing/training accuracy and loss during network training
         System.out.println("Q2. Visualize testing/training accuracy and loss during network training:");
+
+        // init default network and train/print stats
+        TwoLayerNN twoLayerNN = new TwoLayerNN(3);
         twoLayerNN.train(titanicSplit.getTrain(), titanicSplit.getTest());
+        System.out.println();
 
-        // double noBiasAccuracy = trainTestClassifier(1, twoLayerNNNoBias, new ArrayList<>(), titanicSplit);
-        // double withBiasAccuracy = trainTestClassifier(100, twoLayerNN, new ArrayList<>(), titanicSplit);]
+        // Q3. Impact of number of hidden nodes on network accuracy
+        System.out.println("Q3. Impact of number of hidden nodes on network accuracy:");
+        for (int nodeCount = 1; nodeCount <= 10; nodeCount++) {
+            // init NN with correct node count
+            TwoLayerNN nn = new TwoLayerNN(nodeCount);
 
-//        // 1 & 2 - choosing best lambda
-//        // lambda 0 - 10
-//        System.out.println("1&2a. Stats from NB all/pos features classifiers (wine, lambda 0 - 10):");
-//        System.out.println("lambda,allFeatsAccuracy,posFeatsAccuracy");
-//        for (double lambda = 0.0; lambda <= 10.0; lambda += 1.0) {
-//            // set lambda
-//            nbClassifierAllFeats.setLambda(lambda);
-//            nbClassifierPosFeats.setLambda(lambda);
-//
-//            // get accuracies
-//            double currAllFeatsAccuracy = trainTestClassifier(1, nbClassifierAllFeats, new ArrayList<>(), wineSplit);
-//            double currPosFeatsAccuracy = trainTestClassifier(1, nbClassifierPosFeats, new ArrayList<>(), wineSplit);
-//
-//            // print csv stats
-//            System.out.printf("%f,%f,%f\n", lambda, currAllFeatsAccuracy, currPosFeatsAccuracy);
-//        }
-//        System.out.println();
+            double avgTrainSum = 0.0;
+            double avgTestSum = 0.0;
+
+            // loop through folds and print training stats
+            System.out.printf("Node count: %d\n", nodeCount);
+            System.out.println("fold,trainAccuracy,testAccuracy");
+            for (int fold = 0; fold < 10; fold++) {
+                // get data fold
+                DataSetSplit titanicFold = titanicXV.getValidationSet(fold);
+
+                // train and save accuracies
+                double[] accuracies = trainTestClassifierWithTestAccuracy(1, nn, new ArrayList<>(), titanicFold);
+
+                // tally avg sums and print
+                avgTrainSum += accuracies[0];
+                avgTestSum += accuracies[1];
+                System.out.printf("%d,%f,%f\n", fold, accuracies[0], accuracies[1]);
+            }
+
+            System.out.printf("avg,%f,%f\n\n", avgTrainSum / 10, avgTestSum / 10);
+        }
+
+        // Q4. Find the ideal NN
+        System.out.println("Q4. Find the ideal NN:");
+
+        // init network; 7 hidden nodes from experiment 3
+        TwoLayerNN idealNN = new TwoLayerNN(7);
+
+        // eta 0 - 0.5; step of 0.01
+        System.out.println("eta,avgTrainAccuracy,avgTestAccuracy");
+        for (double eta = 0.0; eta <= 0.5; eta += 0.01) {
+            // set eta
+            idealNN.setEta(eta);
+
+            // init avg train/test sums
+            double avgTrainSum = 0.0;
+            double avgTestSum = 0.0;
+
+            for (int fold = 0; fold < 10; fold++) {
+                // get data fold
+                DataSetSplit titanicFold = titanicXV.getValidationSet(fold);
+
+                // train and save accuracies
+                double[] accuracies = trainTestClassifierWithTestAccuracy(1, idealNN, new ArrayList<>(), titanicFold);
+
+                // tally avg sums
+                avgTrainSum += accuracies[0];
+                avgTestSum += accuracies[1];
+            }
+
+            System.out.printf("%f,%f,%f\n", eta, avgTrainSum / 10, avgTestSum / 10);
+        }
+        System.out.println();
+
+        // iterations 1 - 200; step of 1
+        idealNN.setEta(0.1); // reset to default
+        System.out.println("iterations,avgTrainAccuracy,avgTestAccuracy");
+        for (int i = 1; i <= 200; i++) {
+            // set eta
+            idealNN.setIterations(i);
+
+            // init avg train/test sums
+            double avgTrainSum = 0.0;
+            double avgTestSum = 0.0;
+
+            for (int fold = 0; fold < 10; fold++) {
+                // get data fold
+                DataSetSplit titanicFold = titanicXV.getValidationSet(fold);
+
+                // train and save accuracies
+                double[] accuracies = trainTestClassifierWithTestAccuracy(1, idealNN, new ArrayList<>(), titanicFold);
+
+                // tally avg sums
+                avgTrainSum += accuracies[0];
+                avgTestSum += accuracies[1];
+            }
+
+            System.out.printf("%d,%f,%f\n", i, avgTrainSum / 10, avgTestSum / 10);
+        }
+        System.out.println();
+
+        // print 10-XV accuracies of ideal NN
+        // set to found ideal values
+        idealNN.setEta(0.39);
+        idealNN.setIterations(144);
+
+        // init avg train/test sums
+        double avgTrainSum = 0.0;
+        double avgTestSum = 0.0;
+
+        System.out.println("fold,avgTrainAccuracy,avgTestAccuracy");
+        for (int fold = 0; fold < 10; fold++) {
+            // get data fold
+            DataSetSplit titanicFold = titanicXV.getValidationSet(fold);
+
+            // train and save accuracies
+            double[] accuracies = trainTestClassifierWithTestAccuracy(1, idealNN, new ArrayList<>(), titanicFold);
+
+            // tally avg sums
+            avgTrainSum += accuracies[0];
+            avgTestSum += accuracies[1];
+            System.out.printf("%d,%f,%f\n", fold, accuracies[0], accuracies[1]);
+        }
+
+        System.out.printf("avg,%f,%f\n", avgTrainSum / 10, avgTestSum / 10);
+
+        // Q5. Evaluate tanh vs. sigmoid performance (7 hidden nodes)
+        System.out.println("Q5. Evaluate tanh vs. sigmoid performance (7 hidden nodes):");
+
+        // init networks with default eta/iterations
+        TwoLayerNN tanhNetwork = new TwoLayerNN(7);
+        tanhNetwork.setTanhActivation();
+        TwoLayerNN sigmoidNetwork = new TwoLayerNN(7);
+        sigmoidNetwork.setSigmoidActivation();
+
+        // init avg train/test sums
+        double avgTanhTrainSum = 0.0;
+        double avgTanhTestSum = 0.0;
+        double avgSigmoidTrainSum = 0.0;
+        double avgSigmoidTestSum = 0.0;
+
+        System.out.println("fold,avgTanhTrainAccuracy,avgTanhTestAccuracy,avgSigmoidTrainAccuracy,avgSigmoidTestAccuracy");
+        for (int fold = 0; fold < 10; fold++) {
+            // get data folds (preprocessed sigmoid data)
+            DataSetSplit titanicTanhFold = titanicXV.getValidationSet(fold);
+            DataSetSplit titanicSigmoidFold = titanicSigmoidXV.getValidationSet(fold);
+
+            // train and save accuracies
+            double[] tanhAccuracies = trainTestClassifierWithTestAccuracy(1, tanhNetwork, new ArrayList<>(), titanicTanhFold);
+            double[] sigmoidAccuracies = trainTestClassifierWithTestAccuracy(1, sigmoidNetwork, new ArrayList<>(), titanicSigmoidFold);
+
+            // tally avg sums
+            avgTanhTrainSum += tanhAccuracies[0];
+            avgTanhTestSum += tanhAccuracies[1];
+            avgSigmoidTrainSum += sigmoidAccuracies[0];
+            avgSigmoidTestSum += sigmoidAccuracies[1];
+
+            // print fold accuracies
+            System.out.printf("%d,%f,%f,%f,%f\n", fold,
+                    tanhAccuracies[0], tanhAccuracies[1],
+                    sigmoidAccuracies[0], sigmoidAccuracies[1]);
+        }
+
+        System.out.printf("avg,%f,%f,%f,%f\n",
+                avgTanhTrainSum / 10, avgTanhTestSum / 10,
+                avgSigmoidTrainSum / 10, avgSigmoidTestSum / 10);
     }
 
     /**
@@ -121,8 +264,11 @@ public class Experimenter {
      * @param classifier which classifier to use
      * @param preprocessors a list of preprocessors in order of their intended use
      * @param dataSetSplit the data set to use
+     *
+     * @return an ArrayList where the item at index 0 is the training accuracy and the item
+     * at index 1 is the testing accuracy
      */
-    public static void trainTestClassifierWithTestAccuracy(
+    public static double[] trainTestClassifierWithTestAccuracy(
             int iterationCount,
             Classifier classifier,
             List<DataPreprocessor> preprocessors,
@@ -177,73 +323,31 @@ public class Experimenter {
                 totalTestGuesses++;
             }
         }
+
+        // calc and return train/test accuracy
+        double trainAccuracy = (double)correctTrainGuesses / (double)totalTrainGuesses;
+        double testAccuracy = (double)correctTestGuesses / (double)totalTestGuesses;
+
+        double[] accuracies = new double[2];
+        accuracies[0] = trainAccuracy;
+        accuracies[1] = testAccuracy;
+
+        return accuracies;
     }
 
     /**
-     * Helper for printing model evaluation stats.
+     * A small helper fxn for changing labels in a data set.
      *
-     * @param correctGuesses
-     * @param totalGuesses
+     * @param data
+     * @param label
+     * @param target
      */
-    public static void printStats(int correctGuesses, int totalGuesses) {
-        System.out.printf("-- Correct guesses: %d\n", correctGuesses);
-        System.out.printf("-- Total guesses: %d\n", totalGuesses);
-        System.out.printf("-- Accuracy: %f%%\n", (double)correctGuesses / (double)totalGuesses);
-        System.out.println("");
-    }
-
-    /**
-     * Helper for printing model evaluation stats in a CSV-friendly way.
-     *
-     * @param iteration
-     * @param correctGuesses
-     * @param totalGuesses
-     */
-    public static void printCSVFriendlyStats(int iteration, int correctGuesses, int totalGuesses) {
-        double accuracy = (double) correctGuesses / (double) totalGuesses;
-        System.out.printf("%d, %f\n", iteration, accuracy);
-    }
-
-    /**
-     * Helper for printing model evaluation stats (training and testing data).
-     *
-     * @param correctTrainGuesses
-     * @param totalTrainGuesses
-     * @param correctTestGuesses
-     * @param totalTestGuesses
-     */
-    public static void printStatsWithTrainTestAccuracy(
-            int correctTrainGuesses,
-            int totalTrainGuesses,
-            int correctTestGuesses,
-            int totalTestGuesses) {
-        System.out.printf("-- Correct training data guesses: %d\n", correctTrainGuesses);
-        System.out.printf("-- Total training data guesses: %d\n", totalTrainGuesses);
-        System.out.printf("-- Training data accuracy: %f%%\n", (double)correctTrainGuesses / (double)totalTrainGuesses);
-        System.out.printf("-- Correct testing data guesses: %d\n", correctTestGuesses);
-        System.out.printf("-- Total testing data guesses: %d\n", totalTestGuesses);
-        System.out.printf("-- Testing data accuracy: %f%%\n", (double)correctTestGuesses / (double)totalTestGuesses);
-        System.out.println("");
-    }
-
-    /**
-     * Helper for printing model evaluation stats in a CSV-friendly way (training and testing stats).
-     * Formatted iteration, trainAccuracy, testAccuracy
-     *
-     * @param iteration
-     * @param correctTrainGuesses
-     * @param totalTrainGuesses
-     * @param correctTestGuesses
-     * @param totalTestGuesses
-     */
-    public static void printCSVFriendlyStatsWithTrainAndTestAccuracy(
-            int iteration,
-            int correctTrainGuesses,
-            int totalTrainGuesses,
-            int correctTestGuesses,
-            int totalTestGuesses) {
-        double trainAccuracy = (double) correctTrainGuesses / (double) totalTrainGuesses;
-        double testAccuracy = (double) correctTestGuesses / (double) totalTestGuesses;
-        System.out.printf("%d, %f, %f\n", iteration, trainAccuracy, testAccuracy);
+    private static void changeLabel(DataSet data, double label, double target) {
+        // loop through examples and change label if necessary
+        for (Example e : data.getData()) {
+            if (e.getLabel() == label) {
+                e.setLabel(target);
+            }
+        }
     }
 }
