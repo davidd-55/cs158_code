@@ -41,6 +41,13 @@ public class TwoLayerNN implements Classifier {
     protected double[] hiddenLayerPostActivation;
     protected double outputPostActivation;
 
+    /**
+     * Initialize a two layer NN with a default eta value of 0.1, iteration
+     * value of 200, tanh activation, including bias, and the number of hidden
+     * nodes as specified.
+     *
+     * @param numHiddenNodes
+     */
     public TwoLayerNN(int numHiddenNodes) {
         this.numHiddenNodes = numHiddenNodes;
         this.eta = 0.1;
@@ -340,20 +347,6 @@ public class TwoLayerNN implements Classifier {
      * @param includeBias
      */
     public void setIncludeBias(boolean includeBias) { this.includeBias = includeBias; }
-
-    /**
-     * An internal helper function for checking if the NN's activation function is tanh.
-     */
-    private boolean isTanhActivation() {
-        return this.activationFxn == TANH_ACTIVATION;
-    }
-
-    /**
-     * An internal helper function for checking if the NN's activation function is sigmoid.
-     */
-    private boolean isSigmoidActivation() {
-        return this.activationFxn == SIGMOID_ACTIVATION;
-    }
 
     /**
      * A helper fxn for calculating a dot product between two arrays.
