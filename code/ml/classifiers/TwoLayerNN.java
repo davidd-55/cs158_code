@@ -435,6 +435,10 @@ public class TwoLayerNN implements Classifier {
             // shuffle data
             Collections.shuffle(training);
 
+            /* NEW CODE */
+            double sumSquaredError = 0.0;
+            /* END NEW CODE */
+
             // loop through examples
             for (Example e : training) {
                 // compute example e through the network and update newly
@@ -443,11 +447,15 @@ public class TwoLayerNN implements Classifier {
 
                 // backpropagation and adjust weights
                 backpropagation(e);
+
+                /* NEW CODE */
+                sumSquaredError += calculateSquaredError(e.getLabel(), this.outputPostActivation);
+                /* END NEW CODE */
             }
 
             /* NEW CODE Start */
             // init sum squared error and train/test counters
-            double sumSquaredError = 0.0;
+
             int correctTrainGuesses = 0;
             int totalTrainGuesses = 0;
             int correctTestGuesses = 0;
@@ -458,7 +466,6 @@ public class TwoLayerNN implements Classifier {
                 double label = trainE.getLabel();
                 double prediction = classify(trainE);
 
-                sumSquaredError += calculateSquaredError(label, prediction);
                 if (label == prediction) {
                     correctTrainGuesses++;
                 }
@@ -470,7 +477,6 @@ public class TwoLayerNN implements Classifier {
                 double label = testE.getLabel();
                 double prediction = classify(testE);
 
-                sumSquaredError += calculateSquaredError(label, prediction);
                 if (label == prediction) {
                     correctTestGuesses++;
                 }
